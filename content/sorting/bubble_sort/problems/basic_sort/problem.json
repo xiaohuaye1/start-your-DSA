@@ -1,0 +1,12 @@
+{
+  "id": "bubble_sort.basic_sort",
+  "title": "完成冒泡排序",
+  "time_limit_ms": 2000,
+  "cases": [
+    {"name": "样例：普通数组", "file": "cases/sample", "sample": true},
+    {"name": "单个元素", "file": "cases/single"},
+    {"name": "重复和负数", "file": "cases/duplicate"},
+    {"name": "已经有序", "file": "cases/sorted"},
+    {"name": "完全逆序", "file": "cases/reverse"}
+  ]
+}

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Start Your DSA</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="../node_modules/ace-builds/src-min-noconflict/ace.js"></script>
+  <script defer src="../node_modules/ace-builds/src-min-noconflict/mode-c_cpp.js"></script>
+  <script defer src="../node_modules/ace-builds/src-min-noconflict/theme-tomorrow_night.js"></script>
+  <script defer src="../node_modules/marked/lib/marked.umd.js"></script>
+  <script defer src="../node_modules/dompurify/dist/purify.min.js"></script>
+  <script type="module" src="renderer.js"></script>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true"><defs>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5v16M12 5C9 3 5 3 2 4v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 1Z"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><circle cx="12" cy="4" r="2.5"/><circle cx="4" cy="20" r="2.5"/><circle cx="20" cy="20" r="2.5"/><path d="M12 7v5M4 17v-5h16v5"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M3 7h4M3 12h4M3 17h4M10 8h6M10 12h6M10 16h4"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.7 6.3L21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7ZM21 3v4M19 5h4"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 12 7-12 7Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 0 5M4 4v6h6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 6 6 6-6 6M13 18h7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  </defs></svg>
+  <header class="titlebar">
+    <div class="brand">Start Your DSA</div>
+    <button id="help-open" class="menu-button">帮助</button><button id="settings-open" class="menu-button">设置</button>
+    <div class="window-buttons"><button data-window="minimize" aria-label="最小化">—</button><button data-window="maximize" aria-label="最大化">□</button><button data-window="close" class="window-close" aria-label="关闭">×</button></div>
+  </header>
+  <div class="app-body">
+    <nav class="activity-rail" aria-label="主导航">
+      <button data-panel="courses" class="active" title="课程选择" aria-label="课程选择"><svg><use href="#i-book"/></svg></button>
+      <button data-panel="mindmap" title="思维导图" aria-label="思维导图"><svg><use href="#i-map"/></svg></button>
+      <button data-panel="notes" title="笔记本" aria-label="笔记本"><svg><use href="#i-note"/></svg></button>
+      <button data-panel="ai" title="AI 辅助" aria-label="AI 辅助"><svg><use href="#i-spark"/></svg></button>
+      <div class="rail-spacer"></div>
+    </nav>
+    <aside class="sidebar">
+      <div class="sidebar-heading"><h2 id="sidebar-title">数据结构与算法</h2></div>
+      <section id="panel-courses" class="sidebar-panel">
+        <label class="search-box"><svg><use href="#i-search"/></svg><input id="course-search" placeholder="搜索课程" aria-label="搜索课程"></label>
+        <div id="course-tree"></div>
+      </section>
+      <section id="panel-mindmap" class="sidebar-panel" hidden><p class="sidebar-description">当前课程的知识关系</p><div id="knowledge-tree"></div></section>
+      <section id="panel-notes" class="sidebar-panel" hidden><p class="sidebar-description" id="note-title">当前课程笔记</p><textarea id="notes" placeholder="记下你的理解、易错点和解题思路……"></textarea><span class="save-hint" id="note-state">自动保存</span></section>
+      <section id="panel-ai" class="sidebar-panel" hidden><span class="feature-label">尚未接入模型</span><p class="sidebar-description">先整理你的问题，再复制给你使用的 AI 工具。</p><textarea id="ai-question" placeholder="我正在学习冒泡排序……&#10;我尝试了……&#10;我不明白……&#10;请先给我提示。"></textarea><button id="copy-question" class="button full">复制问题</button></section>
+      <div class="sidebar-progress"><div><span>学习进度</span><b id="progress-count">0 / 4</b></div><div class="progress-track"><span id="progress-fill"></span></div><p>灰色课程待开放</p></div>
+    </aside>
+    <main class="workspace">
+      <div class="document-tabs"><div class="document-tab"><svg><use href="#i-book"/></svg><span id="document-title">冒泡排序</span></div><button id="course-reveal" class="tab-add" title="查找课程" aria-label="查找课程"><svg><use href="#i-plus"/></svg></button></div>
+      <nav id="stage-tabs" class="learning-stages" role="tablist" aria-label="学习环节"></nav>
+      <div class="lesson-heading"><div class="lesson-identity"><h1 id="lesson-title">冒泡排序</h1><div class="breadcrumb" id="breadcrumb">查找与排序 / 冒泡排序</div></div><div id="animation-tools" class="animation-tools"><label class="round-choice"><span id="round-label" class="sr-only">当前轮次</span><select id="round-select" aria-label="跳转轮次"></select></label><label class="array-input"><span>初始数组</span><input id="array-input" value="5, 2, 8, 1, 6, 3, 7, 4" aria-label="输入数组"><input id="target-input" value="6" aria-label="查找目标" hidden></label><button id="generate" class="button compact">生成数组</button><button id="reset-view" class="button compact"><svg><use href="#i-reset"/></svg>重置</button></div><span class="stage-badge" id="stage-badge" hidden>动手编程</span></div>
+      <section id="animation-page" class="page">
+        <div class="animation-main">
+          <div class="animation-workspace">
+            <div class="array-canvas"><p id="canvas-message">比较相邻元素，让较大的元素逐步向右移动。</p><div class="array-scroll"><div id="array-stage"></div></div><div class="canvas-legend"><span><i class="amber"></i>当前比较</span><span><i class="neutral"></i>待处理</span><span><i class="green"></i>已归位</span></div></div>
+            <aside class="inspector" aria-label="动画运行状态"><section class="runtime-section"><h2>运行状态</h2><div id="variables" class="variable-list"></div></section><section class="operations-section"><div class="inspector-heading"><h2>操作记录</h2><span id="step-count">1 / 1</span></div><div id="operation-list" class="operation-list"></div></section><div class="operation-totals"><span>比较 <b id="compare-count">0</b> 次</span><span>交换 <b id="swap-count">0</b> 次</span></div></aside>
+          </div>
+          <div class="playback"><div class="playback-buttons"><button id="previous" class="button" title="上一步">上一步</button><button id="play" class="button primary"><svg><use href="#i-play"/></svg><span>播放</span></button><button id="next" class="button">下一步</button><button id="reset" class="button icon-button" title="重置动画" aria-label="重置动画"><svg><use href="#i-reset"/></svg></button></div><div class="timeline"><input id="timeline" type="range" min="0" max="0" value="0" aria-label="动画进度"></div><label class="speed-control"><select id="speed" aria-label="播放速度"><option value="25">0.25×</option><option value="50">0.5×</option><option value="75">0.75×</option><option value="100" selected>1.0×</option><option value="125">1.25×</option><option value="150">1.5×</option><option value="175">1.75×</option><option value="200">2.0×</option></select></label></div>
+        </div>
+        <div class="auxiliary">
+          <div class="panel-tabs"><button class="active" data-aux="details">思路讲解</button><button data-aux="state">辅助演示</button><button data-aux="explanation">课程原理</button></div>
+          <div id="aux-details" class="aux-detail-grid"><div class="explain-section"><h3 id="action-title">准备开始</h3><p id="step-explanation">每轮从左向右检查相邻元素。</p><p id="step-tip" class="step-tip">为什么每一轮可以少比较一个元素？</p></div><div class="array-summary"><div id="mini-array" class="mini-array"></div><div class="flow-direction" aria-hidden="true"></div><p id="flow-caption">较大的元素逐步向右移动</p></div></div>
+          <div id="aux-state" class="array-state-panel" hidden><p>当前快照 · 下标、数值与元素状态</p><div id="array-state" class="array-state"></div></div>
+          <div id="aux-explanation" class="markdown auxiliary-reading" hidden></div>
+        </div>
+      </section>
+      <section id="practice-page" class="page" hidden>
+        <div class="practice-main"><div class="practice-toolbar"><div class="language-choice"><svg><use href="#i-code"/></svg><select id="language" aria-label="代码语言"><option>C</option><option>C++</option></select><span class="save-indicator" id="draft-state">已保存</span></div><div class="run-actions"><button id="run" class="button"><svg><use href="#i-play"/></svg>运行样例</button><button id="submit" class="button primary"><svg><use href="#i-check"/></svg>提交判题</button><button id="custom-open" class="button">自定义输入</button><button id="stop" class="button danger" disabled>停止</button></div></div>
+          <div class="coding-grid"><div class="statement-panel"><div class="panel-tabs small"><button class="active" data-question="statement">题目</button><button data-question="reference">参考代码</button></div><div id="statement" class="markdown"></div><pre id="reference-code" hidden></pre></div><div class="editor-panel"><div class="editor-file"><svg><use href="#i-code"/></svg><span id="filename">bubble_sort.c</span><span class="editor-caption">本地草稿</span></div><div id="code-editor"></div></div></div>
+        </div>
+        <div class="output-panel"><div class="panel-tabs"><button class="active" data-output="output"><svg><use href="#i-terminal"/></svg>输出 / 编译结果</button><button data-output="cases">测试用例</button><button data-output="history">提交记录</button><span id="judge-status" class="judge-status">就绪</span></div><div id="output" class="output-scroll"><div class="console-welcome"><svg><use href="#i-terminal"/></svg><div><b>准备好，开始写代码吧。</b><p>运行样例检查结果，提交判题完成这一环节。</p></div></div></div><div id="cases" class="output-scroll" hidden></div><div id="history" class="output-scroll" hidden></div></div>
+      </section>
+      <section id="reading-page" class="page" hidden><div id="reading" class="markdown reading-card"></div><div class="reading-footer"><span>把理解写进笔记，让知识留下来。</span><button id="reading-complete" class="button primary"><svg><use href="#i-check"/></svg>标记本环节已学完</button></div></section>
+    </main>
+  </div>
+  <footer class="statusbar"><span><i id="connection-dot" class="green-dot"></i><span id="connection-label">正在连接本地服务</span></span><span id="status-message">Start Your DSA</span><span class="shortcuts">F5 运行 · Ctrl+Enter 提交 · Ctrl+S 保存</span><span class="status-language">C / C++</span></footer>
+  <div id="toast" role="status" hidden></div>
+  <dialog id="settings-dialog"><div class="dialog-heading"><h2>编译器设置</h2><button data-close="settings-dialog" class="dialog-close">×</button></div><p>留空时自动从 PATH 查找；也可以选择本机编译器。</p><label>GCC / C 编译器<div class="path-row"><input id="gcc-path" placeholder="gcc.exe 的路径"><button class="button" data-compiler="gcc-path">选择…</button></div></label><label>G++ / C++ 编译器<div class="path-row"><input id="gxx-path" placeholder="g++.exe 的路径"><button class="button" data-compiler="gxx-path">选择…</button></div></label><div class="dialog-footer"><button data-close="settings-dialog" class="button">取消</button><button id="settings-save" class="button primary">保存设置</button></div></dialog>
+  <dialog id="custom-dialog"><div class="dialog-heading"><h2>自定义输入</h2><button data-close="custom-dialog" class="dialog-close">×</button></div><p>这次运行只显示输出，不判断答案是否正确。</p><textarea id="custom-input" spellcheck="false">5
+5 4 3 2 1
+</textarea><div class="dialog-footer"><button data-close="custom-dialog" class="button">取消</button><button id="custom-run" class="button primary">编译运行</button></div></dialog>
+  <dialog id="help-dialog"><div class="dialog-heading"><h2>欢迎来到 Start Your DSA</h2><button data-close="help-dialog" class="dialog-close">×</button></div><div class="help-body"><p>左侧选择课程，顶部切换学习环节。先看动画，再独立完成代码练习。</p><p><b>动画：</b>播放、单步前进和回退；选择轮次、点击操作记录或拖动进度条跳转；修改数组后生成新演示。长数组可以在画布内横向滚动。</p><p><b>练习：</b>支持 C/C++。样例通过后，提交全部测试用例；全部 AC 才完成环节。</p><p><b>笔记：</b>点击左侧笔记本图标。代码与笔记自动保存。</p><p>灰色课程待开放。本地判题运行你自己写的可信代码，不提供安全沙箱。AI 尚未接入；演练题为原创示例。</p><p class="data-location">个人数据：<span id="data-directory"></span></p></div><div class="dialog-footer"><button data-close="help-dialog" class="button primary">开始学习</button></div></dialog>
+</body>
+</html>

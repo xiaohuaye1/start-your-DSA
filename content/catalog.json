@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "chapters": [
+    {"id": "sorting", "title": "01 查找与排序", "lessons": ["sorting/bubble_sort"]}
+  ]
+}

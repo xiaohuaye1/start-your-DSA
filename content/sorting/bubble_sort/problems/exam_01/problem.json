@@ -1,0 +1,12 @@
+{
+  "id": "bubble_sort.adjacent_swaps",
+  "title": "最少相邻交换次数（原创演练）",
+  "time_limit_ms": 2000,
+  "cases": [
+    {"name": "样例：三个数", "file": "cases/sample", "sample": true},
+    {"name": "有序数组", "file": "cases/sorted"},
+    {"name": "逆序数组", "file": "cases/reverse"},
+    {"name": "重复元素", "file": "cases/duplicate"},
+    {"name": "单个元素", "file": "cases/single"}
+  ]
+}

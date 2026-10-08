@@ -1,0 +1,19 @@
+{
+  "name": "start-your-dsa-desktop",
+  "version": "0.2.0",
+  "private": true,
+  "description": "JavaScript 桌面界面 + Python 本地判题",
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/javascript.test.mjs",
+    "test:desktop": "node tests/electron-smoke.cjs"
+  },
+  "dependencies": {
+    "ace-builds": "1.44.0",
+    "dompurify": "3.4.16",
+    "marked": "18.1.0"
+  },
+  "devDependencies": { "electron": "44.6.0" }
+}
