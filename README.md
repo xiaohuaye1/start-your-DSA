@@ -16,16 +16,17 @@
 
 ## 下载与启动
 
-1. 在本仓库的 **Releases** 页面，下载 Windows 64 位的 `Start-Your-DSA-0.2.0-portable.exe`。
-2. 双击 EXE，等待解压完成、软件窗口打开。
+1. 在本仓库的 **Releases** 页面，下载 Windows 64 位的 `Start-Your-DSA-0.2.0-win-x64.zip`。
+2. 将 ZIP **全部解压**，然后双击解压目录里的 `Start Your DSA.exe`。
 3. 在左侧选择一节课，再点击它下面的学习环节。
 4. 看完动画后进入实操，自己编写完整的 C/C++ 程序。
 5. 点击“运行样例”检查输出，再点击“提交判题”检查答案。
 
 不需要下载源码，也不需要安装 Python、Node.js 或配置 GCC/G++，软件已经内置运行环境和编译器。
-如果本地已有安装包，也可以直接双击 `release/Start-Your-DSA-0.2.0-portable.exe`。
+本地发布包放在 `release/Start-Your-DSA-0.2.0-win-x64.zip`。
 
-单文件版每次启动都会解压，打开和退出清理可能稍慢，请耐心等待。
+只需要解压一次，以后直接打开 EXE，不会每次启动都重新解压。
+不要在压缩包里直接运行，也不要只拿出 EXE；旁边的文件和文件夹都需要保留。
 关闭软件后，笔记、草稿和进度不会丢失。
 
 编辑器默认空白，不会自动填入答案。你保存过的个人草稿会恢复，需要时可以单独查看“参考代码”。
@@ -50,14 +51,14 @@
 
 1. 把项目源码上传到仓库，`release/`、`node_modules/` 等目录不用提交。
 2. 在仓库页面打开 **Releases → Draft a new release**。
-3. 将 `release/Start-Your-DSA-0.2.0-portable.exe` 拖到附件区，供用户下载。
+3. 将 `release/Start-Your-DSA-0.2.0-win-x64.zip` 拖到附件区，供用户下载。
 
-EXE 约 149 MB，超过普通仓库的单文件限制，因此放在 Releases，不要直接提交到 Git。
+ZIP 是打包后的软件，放在 Releases 附件中，不要直接提交到源码仓库。
 公开发布前还需要检查第三方许可证和对应源码的提供要求，见 `packaging/THIRD-PARTY.md`。
 
 ## 源码说明
 
-仓库保留源码，供查看、修改和重新打包。普通用户使用 Releases 中的 EXE 即可。
+仓库保留源码，供查看、修改和重新打包。普通用户下载 Releases 中的 ZIP，解压后运行 EXE 即可。
 
 界面使用 JavaScript + Electron，课程读取和本地判题使用 Python，C/C++ 编译使用 GCC/G++。
 

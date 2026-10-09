@@ -70,13 +70,14 @@ const config = {
   electronDist: path.join(root, 'node_modules', 'electron', 'dist'),
   npmRebuild: false, asar: true,
   files: ['desktop/**/*', 'assets/**/*', 'package.json'],
+  extraFiles: [{ from: path.join(__dirname, 'USAGE.txt'), to: '使用说明.txt' }],
   extraResources: [
     { from: path.join(work, 'runtime', 'DSABackend'), to: 'backend', filter: ['**/*'] },
     { from: bundled, to: 'toolchain', filter: ['**/*'] },
     { from: notices, to: 'licenses', filter: ['**/*'] },
   ],
-  win: { target: [{ target: 'portable', arch: ['x64'] }], signAndEditExecutable: false },
-  portable: { requestExecutionLevel: 'user', artifactName: 'Start-Your-DSA-${version}-portable.exe' },
+  win: { target: [{ target: 'zip', arch: ['x64'] }], signAndEditExecutable: false,
+    artifactName: 'Start-Your-DSA-${version}-win-x64.zip' },
 };
 const configFile = path.join(work, 'electron-builder.json');
 fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
