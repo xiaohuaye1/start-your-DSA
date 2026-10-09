@@ -68,6 +68,64 @@ def expected_answer(lesson, stage, tokens):
 
 
 class CoreTests(unittest.TestCase):
+    def test_bridge_reports_unknown_courses_and_stages_without_internal_exceptions(self):
+        from PySide6.QtCore import QCoreApplication
+        from unittest.mock import patch
+        from app.bridge import Bridge
+        application = QCoreApplication.instance() or QCoreApplication([])
+        with tempfile.TemporaryDirectory() as temporary:
+            bridge = Bridge(Path(temporary))
+            try:
+                initial_settings = dict(bridge.settings.values)
+                for method in ("load_stage", "save_draft", "judge", "complete"):
+                    for params, message in (
+                        ({"lesson": "nope", "stage": "animation"}, "课程不存在"),
+                        ({"lesson": "sorting.bubble_sort", "stage": "nope"}, "课程环节不存在"),
+                        ({}, "课程不存在"),
+                        ({"lesson": [], "stage": "practice"}, "课程不存在"),
+                        ({"lesson": "sorting.bubble_sort", "stage": []}, "课程环节不存在"),
+                    ):
+                        request = {"id": 123, "method": method,
+                                   "params": {**params, "language": "C", "code": "", "mode": "submit"}}
+                        with self.subTest(method=method, params=params), patch("app.bridge.emit") as send:
+                            bridge.dispatch(request)
+                            reply = send.call_args.args[0]
+                            self.assertEqual(reply["id"], 123)
+                            self.assertIn(message, reply["error"])
+                            self.assertNotIn("StopIteration", reply["error"])
+                            self.assertNotIn("'nope'", reply["error"])
+                with self.assertRaisesRegex(ValueError, "课程不存在"):
+                    bridge.call("save_note", {"lesson": "nope", "text": "keep this note"})
+                with self.assertRaisesRegex(ValueError, "请选择 C 或 C"):
+                    bridge.call("load_stage", {"lesson": "sorting.bubble_sort", "stage": "practice", "language": "JAVA"})
+                self.assertEqual(bridge.settings.values, initial_settings)
+                self.assertFalse(bridge.runner.busy)
+                self.assertIsNone(bridge.job)
+            finally:
+                bridge.database.close()
+
+    def test_speed_requires_an_integer_in_range_and_invalid_values_do_not_change_settings(self):
+        from PySide6.QtCore import QCoreApplication
+        from app.bridge import Bridge
+        from app.storage.settings import Settings
+        application = QCoreApplication.instance() or QCoreApplication([])
+        with tempfile.TemporaryDirectory() as temporary:
+            bridge = Bridge(Path(temporary))
+            try:
+                bridge.call("save_settings", {"speed": 125, "gcc": "existing-gcc.exe"})
+                initial = dict(bridge.settings.values)
+                for invalid in (None, "abc", "100", True, False, 24, 201, -1, 100.5, 100.0,
+                                float("nan"), float("inf"), [], {}):
+                    with self.subTest(speed=invalid), self.assertRaisesRegex(ValueError, "播放速度"):
+                        bridge.call("save_settings", {"speed": invalid, "gcc": "must-not-be-saved.exe"})
+                    self.assertEqual(bridge.settings.values, initial)
+                    self.assertEqual(Settings(Path(temporary)).values, initial)
+                for valid in (25, 50, 75, 100, 125, 150, 200):
+                    self.assertEqual(bridge.call("save_settings", {"speed": valid})["speed"], valid)
+                    self.assertEqual(Settings(Path(temporary)).get("speed"), valid)
+            finally:
+                bridge.database.close()
+
     def test_practice_editors_start_blank_and_preserve_personal_drafts(self):
         from PySide6.QtCore import QCoreApplication
         from app.bridge import Bridge

@@ -209,6 +209,13 @@ test('JavaScript/Python 通信：课程、原有数据库、草稿、判题和�
     assert.equal(boot.lessons[0].title, '算法与复杂度');
     assert.equal(boot.lessons.length, 28);
     assert.deepEqual(boot.lessons[0].stages.map(stage => stage.id), ['animation', 'practice', 'exam']);
+    await assert.rejects(backend.request('load_stage', { lesson: 'nope', stage: 'animation' }), /课程不存在/);
+    await assert.rejects(backend.request('load_stage', { lesson: 'sorting.bubble_sort', stage: 'nope' }), /课程环节不存在/);
+    await assert.rejects(backend.request('load_stage'), /课程不存在/);
+    for (const speed of [null, 'abc', true, false, 24, 201, 100.5])
+      await assert.rejects(backend.request('save_settings', { speed }), /播放速度/);
+    assert.equal((await backend.request('bootstrap')).settings.speed, 100);
+    assert.equal((await backend.request('save_settings', { speed: 125 })).speed, 125);
     const exam = await backend.request('load_stage', { lesson: 'sorting.bubble_sort', stage: 'exam', language: 'C' });
     assert.equal(exam.problem.source.id, 'P1177');
     assert.equal(exam.problem.caseCount, 3);

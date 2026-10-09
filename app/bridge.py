@@ -49,9 +49,18 @@ class Bridge(QObject):
         return sorted(key for key in self.database.completed() if key in self.stage_keys and
                       (key not in self.problem_ids or self.database.has_accepted_submission(self.problem_ids[key])))
 
+    def lesson(self, params):
+        lesson_id = params.get("lesson") if isinstance(params, dict) else None
+        lesson = self.loader.lessons.get(lesson_id) if isinstance(lesson_id, str) else None
+        if lesson is None:
+            raise ValueError("课程不存在，请重新选择课程")
+        return lesson
+
     def lesson_stage(self, params):
-        lesson = self.loader.lessons[params["lesson"]]
-        stage = next(item for item in lesson.stages if item.id == params["stage"])
+        lesson = self.lesson(params)
+        stage = next((item for item in lesson.stages if item.id == params.get("stage")), None)
+        if stage is None:
+            raise ValueError("课程环节不存在，请重新选择学习环节")
         return lesson, stage
 
     def problem(self, params):
@@ -93,6 +102,8 @@ class Bridge(QObject):
             elif stage.kind == "practice":
                 problem = self.loader.problem(lesson, stage.source)
                 language = params.get("language", "C")
+                if language not in ("C", "C++"):
+                    raise ValueError("请选择 C 或 C++")
                 result["problem"] = {"id": problem.id, "title": problem.title,
                     "statement": problem.statement, "starter": problem.starter, "caseCount": len(problem.cases),
                     "samples": [{"input": case.input, "expected": case.expected} for case in problem.cases if case.sample],
@@ -114,7 +125,7 @@ class Bridge(QObject):
             self.database.save_draft(problem.id, params["language"], params["code"])
             return True
         if method == "save_note":
-            lesson = self.loader.lessons[params["lesson"]]
+            lesson = self.lesson(params)
             if not isinstance(params["text"], str) or len(params["text"]) > 1000000:
                 raise ValueError("笔记过长")
             self.database.save_note(lesson.id, params["text"])
@@ -131,7 +142,9 @@ class Bridge(QObject):
                 if key in allowed and not isinstance(allowed[key], str):
                     raise ValueError("编译器路径必须为字符串")
             if "speed" in allowed:
-                allowed["speed"] = max(25, min(200, int(allowed["speed"])))
+                speed = allowed["speed"]
+                if type(speed) is not int or not 25 <= speed <= 200:
+                    raise ValueError("播放速度必须为 25～200 的整数")
             if "sidebar_width" in allowed:
                 width = allowed["sidebar_width"]
                 if type(width) is not int or width != 0 and not 180 <= width <= 420:

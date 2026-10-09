@@ -11,6 +11,7 @@ let draftTimer, noteTimer, toastTimer, noteDirty = false, draftDirty = false;
 let completed = new Set();
 let terminalSize = 0, terminalTruncated = false;
 let sidebarResizer;
+let pendingNavigation = null, requestedLanguage = 'C';
 const actionNames = { start: '准备开始', compare: '比较相邻元素', swap: '交换元素', keep: '保持顺序',
   settle: '完成这一轮', done: '演示完成', narrow: '缩小查找区间' };
 const learningActionNames = { read: '读取元素', accumulate: '更新总和', push: '入栈', pop: '出栈',
@@ -141,8 +142,7 @@ function buildCourses(query = '') {
         button.classList.toggle('active', active);
         if (lesson.stages.every(stage => completed.has(`${lesson.id}/${stage.id}`))) button.append(textElement('span', '✓', 'completed-mark'));
         button.addEventListener('click', guard(async () => {
-          if (loading) return;
-          if (current?.lesson === lesson.id) {
+          if (!loading && current?.lesson === lesson.id) {
             expandedLesson = expandedLesson === lesson.id ? null : lesson.id;
             buildCourses($('course-search').value.trim());
           } else await loadStage(lesson.id, lesson.stages[0].id);
@@ -194,60 +194,74 @@ function updateProgress(values) {
 
 async function loadStage(lesson, stage, options = {}) {
   if (busy) { toast('请等待判题结束，或先点击“停止”。'); $('language').value = language; return; }
+  requestedLanguage = options.language || requestedLanguage;
+  // Keep the last selection while the current request finishes. Never mix a
+  // selector's temporary value with the language of the displayed draft.
+  pendingNavigation = { lesson, stage, language: requestedLanguage };
   if (loading) return;
   pause(); loading = true;
   $('course-tree').setAttribute('aria-busy', 'true');
   try {
-    await Promise.all([saveDraft(), saveNotes()]);
-    const nextLanguage = options.language || language;
-    const next = await api.loadStage({ lesson, stage, language: nextLanguage });
-    current = next; language = nextLanguage;
-    expandedLesson = current.lesson;
-    $('language').value = language;
-    $('lesson-title').textContent = current.title;
-    const chapter = courseOutline.find(group => group.lessons.includes(current.title));
-    $('breadcrumb').textContent = `${chapter?.title || '课程'}  /  ${current.title}  /  ${current.stage.title}`;
-    $('animation-tools').hidden = current.stage.kind !== 'animation';
-    $('stage-badge').hidden = current.stage.kind === 'animation';
-    $('stage-badge').textContent = current.stage.kind === 'animation' ? '可视化学习' : current.stage.kind === 'practice' ? '动手编程' : '知识拓展';
-    for (const page of ['animation', 'practice']) $(page + '-page').hidden = current.stage.kind !== page;
-    $('problem-source').hidden = !current.problem?.source?.url;
-    $('notes').value = current.note;
-    $('note-title').textContent = `${current.title} · 课程笔记`;
-    $('note-state').textContent = '自动保存'; noteDirty = false;
-    updateKnowledgeTree();
-    if (current.stage.kind === 'animation') {
-      const demo = learningDemos[current.stage.source];
-      $('array-canvas').classList.toggle('learning-mode', Boolean(demo));
-      $('concept-scene').hidden = !demo;
-      $('animation-input-label').textContent = demo?.inputLabel || '初始数组';
-      $('generate').textContent = demo ? '生成演示' : '生成数组';
-      $('array-input').placeholder = demo ? demo.positiveOnly ? '1～8 个正整数' : '1～8 个整数' : '1～16 个整数';
-      $('counter-one-label').textContent = demo?.counters[0] || '比较';
-      $('counter-two-label').textContent = demo?.counters[1] || '交换';
-      $('legend-active').textContent = demo ? '当前操作' : '当前比较';
-      $('legend-complete').textContent = demo ? '已处理' : '已归位';
-      markdown($('aux-explanation'), current.markdown);
-      $('target-input').hidden = current.stage.source !== 'binary_search';
-      $('array-input').value = demo ? demo.defaults.join(', ') : current.stage.source === 'binary_search' ? '1, 2, 3, 4, 5, 6, 7, 8' : '5, 2, 8, 1, 6, 3, 7, 4';
-      generate();
-    } else if (current.stage.kind === 'practice') {
-      const writingNote = '> 请自行编写完整程序（包含 main 和输入输出）。编辑器不自动填入代码；题目中的“补全”指需要实现的功能，“参考代码”可单独查看。\n\n';
-      markdown($('statement'), writingNote + current.problem.statement);
-      $('reference-code').textContent = current.reference;
-      editor.setValue(current.draft, -1); draftDirty = false;
-      $('draft-state').textContent = '已保存';
-      const filename = current.problem.source?.id.toLowerCase() || (current.lesson === 'sorting.bubble_sort' ? 'bubble_sort' : current.lesson.split('.').at(-1));
-      $('filename').textContent = `${filename}.${language === 'C' ? 'c' : 'cpp'}`;
-      if (current.problem.source) $('stage-badge').textContent = `${current.problem.source.platform} ${current.problem.source.id}`;
-      clearOutput(); renderHistory(current.history);
-      questionTab('statement'); outputTab('output');
-      requestAnimationFrame(() => editor.resize());
+    refreshPracticeControls();
+    while (pendingNavigation) {
+      const request = pendingNavigation; pendingNavigation = null;
+      await Promise.all([saveDraft(), saveNotes()]);
+      let next;
+      try { next = await api.loadStage(request); }
+      catch (error) { if (pendingNavigation) continue; throw error; }
+      if (pendingNavigation) continue;
+      current = next; language = request.language;
+      expandedLesson = current.lesson;
+      $('language').value = language;
+      $('lesson-title').textContent = current.title;
+      const chapter = courseOutline.find(group => group.lessons.includes(current.title));
+      $('breadcrumb').textContent = `${chapter?.title || '课程'}  /  ${current.title}  /  ${current.stage.title}`;
+      $('animation-tools').hidden = current.stage.kind !== 'animation';
+      $('stage-badge').hidden = current.stage.kind === 'animation';
+      $('stage-badge').textContent = current.stage.kind === 'animation' ? '可视化学习' : current.stage.kind === 'practice' ? '动手编程' : '知识拓展';
+      for (const page of ['animation', 'practice']) $(page + '-page').hidden = current.stage.kind !== page;
+      $('problem-source').hidden = !current.problem?.source?.url;
+      $('notes').value = current.note;
+      $('note-title').textContent = `${current.title} · 课程笔记`;
+      $('note-state').textContent = '自动保存'; noteDirty = false;
+      updateKnowledgeTree();
+      if (current.stage.kind === 'animation') {
+        const demo = learningDemos[current.stage.source];
+        $('array-canvas').classList.toggle('learning-mode', Boolean(demo));
+        $('concept-scene').hidden = !demo;
+        $('animation-input-label').textContent = demo?.inputLabel || '初始数组';
+        $('generate').textContent = demo ? '生成演示' : '生成数组';
+        $('array-input').placeholder = demo ? demo.positiveOnly ? '1～8 个正整数' : '1～8 个整数' : '1～16 个整数';
+        $('counter-one-label').textContent = demo?.counters[0] || '比较';
+        $('counter-two-label').textContent = demo?.counters[1] || '交换';
+        $('legend-active').textContent = demo ? '当前操作' : '当前比较';
+        $('legend-complete').textContent = demo ? '已处理' : '已归位';
+        markdown($('aux-explanation'), current.markdown);
+        $('target-input').hidden = current.stage.source !== 'binary_search';
+        $('array-input').value = demo ? demo.defaults.join(', ') : current.stage.source === 'binary_search' ? '1, 2, 3, 4, 5, 6, 7, 8' : '5, 2, 8, 1, 6, 3, 7, 4';
+        generate();
+      } else if (current.stage.kind === 'practice') {
+        const writingNote = '> 请自行编写完整程序（包含 main 和输入输出）。编辑器不自动填入代码；题目中的“补全”指需要实现的功能，“参考代码”可单独查看。\n\n';
+        markdown($('statement'), writingNote + current.problem.statement);
+        $('reference-code').textContent = current.reference;
+        editor.setValue(current.draft, -1); draftDirty = false;
+        $('draft-state').textContent = '已保存';
+        const filename = current.problem.source?.id.toLowerCase() || (current.lesson === 'sorting.bubble_sort' ? 'bubble_sort' : current.lesson.split('.').at(-1));
+        $('filename').textContent = `${filename}.${language === 'C' ? 'c' : 'cpp'}`;
+        if (current.problem.source) $('stage-badge').textContent = `${current.problem.source.platform} ${current.problem.source.id}`;
+        clearOutput(); renderHistory(current.history);
+        questionTab('statement'); outputTab('output');
+        requestAnimationFrame(() => editor.resize());
+      }
+      updateProgress();
+      if (!$('panel-courses').hidden) document.querySelector('.lesson-stage.active')?.closest('.lesson-node').scrollIntoView({ block: 'nearest' });
+      $('status-message').textContent = `${current.title} · ${current.stage.title}`;
     }
-    updateProgress();
-    if (!$('panel-courses').hidden) document.querySelector('.lesson-stage.active')?.closest('.lesson-node').scrollIntoView({ block: 'nearest' });
-    $('status-message').textContent = `${current.title} · ${current.stage.title}`;
-  } finally { loading = false; $('course-tree').setAttribute('aria-busy', 'false'); $('language').value = language; }
+  } finally {
+    loading = false; pendingNavigation = null; requestedLanguage = language;
+    $('course-tree').setAttribute('aria-busy', 'false'); $('language').value = language;
+    refreshPracticeControls();
+  }
 }
 
 function showPanel(panel) {
@@ -719,19 +733,35 @@ function log(message, status = '') {
   $('output').scrollTop = $('output').scrollHeight;
 }
 
+function refreshPracticeControls() {
+  for (const id of ['run', 'submit', 'custom-open']) $(id).disabled = busy || loading;
+  $('language').disabled = busy;
+  $('stop').disabled = !busy;
+  editor.setReadOnly(busy || loading);
+  $('notes').readOnly = loading;
+}
+
 function setBusy(value) {
   busy = value;
-  for (const id of ['run', 'submit', 'custom-open', 'language']) $(id).disabled = value;
-  $('stop').disabled = !value; editor.setReadOnly(value); buildCourses($('course-search').value.trim());
+  refreshPracticeControls();
+  buildCourses($('course-search').value.trim());
 }
 
 async function runJudge(mode, input = '') {
   if (busy || loading || current?.stage.kind !== 'practice') return;
-  await saveDraft(); clearOutput(); outputTab('output'); setBusy(true);
-  $('judge-status').textContent = current.stage.id === 'exam' ? 'Compiling…' : '正在编译…';
+  const request = { lesson: current.lesson, stage: current.stage.id, language, code: editor.getValue(), mode, input };
   try {
-    await api.judge({ lesson: current.lesson, stage: current.stage.id, language, code: editor.getValue(), mode, input });
-  } catch (error) { setBusy(false); if (current.stage.id !== 'exam') log(error.message, 'bad'); toast(error.message); }
+    // Lock before the first await, so navigation cannot change this submission.
+    setBusy(true);
+    await saveDraft(); clearOutput(); outputTab('output');
+    $('judge-status').textContent = current.stage.id === 'exam' ? 'Compiling…' : '正在编译…';
+    await api.judge(request);
+  } catch (error) {
+    setBusy(false);
+    $('judge-status').textContent = 'ERROR'; $('judge-status').className = 'judge-status bad';
+    if (current.stage.id !== 'exam') log(error.message, 'bad');
+    toast(error.message);
+  }
 }
 
 function renderCase(result) {
