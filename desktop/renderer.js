@@ -1,6 +1,7 @@
 import { bubbleSteps, binarySteps, parseArray } from './algorithms.js';
 import { learningDemos, learningSteps, parseLearningInput, lessonDemo } from './learning-demos.js';
 import { renderStructure } from './structure-scenes.js';
+import { createSidebarResizer } from './sidebar-resizer.js';
 
 const $ = id => document.getElementById(id);
 const api = window.dsa;
@@ -9,6 +10,7 @@ let steps = [], stepIndex = 0, playTimer = null, cellOrder = [], cellAnimations 
 let draftTimer, noteTimer, toastTimer, noteDirty = false, draftDirty = false;
 let completed = new Set();
 let terminalSize = 0, terminalTruncated = false;
+let sidebarResizer;
 const actionNames = { start: '准备开始', compare: '比较相邻元素', swap: '交换元素', keep: '保持顺序',
   settle: '完成这一轮', done: '演示完成', narrow: '缩小查找区间' };
 const learningActionNames = { read: '读取元素', accumulate: '更新总和', push: '入栈', pop: '出栈',
@@ -819,7 +821,7 @@ function attachEvents() {
     }
     if (message.event === 'prepare-close' && !closing) {
       closing = true; pause();
-      try { await Promise.all([saveDraft(), saveNotes()]); await api.closeReady(); }
+      try { await Promise.all([saveDraft(), saveNotes(), sidebarResizer?.flush()]); await api.closeReady(); }
       catch (error) { closing = false; toast(`关闭前保存失败：${error.message}`); }
     }
   }));
@@ -829,6 +831,10 @@ async function start() {
   if (!api) throw new Error('请使用“启动.bat”打开桌面软件，直接用浏览器打开不能调用编译器。');
   makeEditor(); attachEvents();
   bootstrap = await api.bootstrap();
+  document.documentElement.classList.toggle('native-material', bootstrap.backgroundMaterial === 'acrylic');
+  sidebarResizer = createSidebarResizer({ sidebar: $('sidebar'), handle: $('sidebar-resizer'),
+    rail: document.querySelector('.activity-rail'), width: bootstrap.settings.sidebar_width,
+    save: params => api.saveSettings(params), onError: error => toast(`侧栏宽度保存失败：${error.message}`) });
   updateProgress(bootstrap.completed);
   $('data-directory').textContent = bootstrap.dataDirectory;
   $('connection-label').textContent = '本地判题已连接';

@@ -123,12 +123,16 @@ class Bridge(QObject):
             self.database.complete(lesson.id, stage.id)
             return self.completed()
         if method == "save_settings":
-            allowed = {key: value for key, value in params.items() if key in ("gcc", "g++", "speed")}
+            allowed = {key: value for key, value in params.items() if key in ("gcc", "g++", "speed", "sidebar_width")}
             for key in ("gcc", "g++"):
                 if key in allowed and not isinstance(allowed[key], str):
                     raise ValueError("编译器路径必须为字符串")
             if "speed" in allowed:
                 allowed["speed"] = max(25, min(200, int(allowed["speed"])))
+            if "sidebar_width" in allowed:
+                width = allowed["sidebar_width"]
+                if type(width) is not int or width != 0 and not 180 <= width <= 420:
+                    raise ValueError("侧栏宽度必须为 180～420 的整数，或 0（恢复默认）")
             self.settings.update(**allowed)
             return self.settings.values
         if method == "judge":

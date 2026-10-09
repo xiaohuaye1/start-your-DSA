@@ -68,6 +68,33 @@ def expected_answer(lesson, stage, tokens):
 
 
 class CoreTests(unittest.TestCase):
+    def test_sidebar_settings_persist_without_changing_learning_or_compiler_settings(self):
+        from PySide6.QtCore import QCoreApplication
+        from app.bridge import Bridge
+        from app.storage.settings import Settings
+        application = QCoreApplication.instance() or QCoreApplication([])
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            settings = Settings(directory)
+            self.assertEqual(settings.get("sidebar_width"), 0)
+            settings.update(gcc="my-gcc.exe", speed=125, last_lesson="sorting.bubble_sort")
+            bridge = Bridge(directory)
+            try:
+                bridge.call("save_settings", {"sidebar_width": 360})
+                restored = Settings(directory)
+                self.assertEqual(restored.get("sidebar_width"), 360)
+                self.assertEqual(restored.get("gcc"), "my-gcc.exe")
+                self.assertEqual(restored.get("speed"), 125)
+                self.assertEqual(restored.get("last_lesson"), "sorting.bubble_sort")
+                for invalid in (-1, 179, 421, True, "222", 222.5, None):
+                    with self.assertRaises(ValueError):
+                        bridge.call("save_settings", {"sidebar_width": invalid})
+                self.assertEqual(Settings(directory).get("sidebar_width"), 360)
+                bridge.call("save_settings", {"sidebar_width": 0})
+                self.assertEqual(Settings(directory).get("sidebar_width"), 0)
+            finally:
+                bridge.database.close()
+
     def test_catalog_all_resources_and_expected_answers(self):
         loader = CourseLoader(ROOT / "content")
         self.assertEqual(len(loader.lessons), 28)

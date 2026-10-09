@@ -43,7 +43,7 @@
       <button data-panel="ai" title="AI 辅助" aria-label="AI 辅助"><svg><use href="#i-spark"/></svg></button>
       <div class="rail-spacer"></div>
     </nav>
-    <aside class="sidebar">
+    <aside id="sidebar" class="sidebar">
       <div class="sidebar-heading"><h2 id="sidebar-title">数据结构与算法</h2></div>
       <section id="panel-courses" class="sidebar-panel">
         <label class="search-box"><svg><use href="#i-search"/></svg><input id="course-search" placeholder="搜索课程" aria-label="搜索课程"></label>
@@ -54,6 +54,7 @@
       <section id="panel-ai" class="sidebar-panel" hidden><span class="feature-label">尚未接入模型</span><p class="sidebar-description">先整理你的问题，再复制给你使用的 AI 工具。</p><textarea id="ai-question" placeholder="我正在学习冒泡排序……&#10;我尝试了……&#10;我不明白……&#10;请先给我提示。"></textarea><button id="copy-question" class="button full">复制问题</button></section>
       <div class="sidebar-progress"><div><span>学习进度</span><b id="progress-count">0 / 84</b></div><div class="progress-track"><span id="progress-fill"></span></div><p>全部 28 节已开放</p></div>
     </aside>
+    <div id="sidebar-resizer" class="sidebar-resizer" role="separator" tabindex="0" aria-label="调整左侧栏宽度" aria-orientation="vertical" aria-controls="sidebar" aria-valuemin="180" aria-valuemax="420" aria-valuenow="222" title="拖拽调整宽度 · 双击恢复默认 · 方向键微调"></div>
     <main class="workspace">
       <div class="document-tabs"><div class="document-tab"><svg><use href="#i-book"/></svg><span id="document-title">冒泡排序</span></div><button id="course-reveal" class="tab-add" title="查找课程" aria-label="查找课程"><svg><use href="#i-plus"/></svg></button></div>
       <nav id="stage-tabs" class="learning-stages" role="tablist" aria-label="学习环节"></nav>

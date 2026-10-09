@@ -42,7 +42,7 @@ async function main() {
     const typography = await page.evaluate(() => ({
       body: getComputedStyle(document.body).fontSize,
       heading: getComputedStyle(document.getElementById('lesson-title')).fontSize,
-      background: getComputedStyle(document.body).backgroundColor,
+      background: getComputedStyle(document.querySelector('.workspace')).backgroundColor,
     }));
     assert.deepEqual(typography, { body: '13px', heading: '18px', background: 'rgb(27, 27, 27)' });
     await page.locator('#next').click();

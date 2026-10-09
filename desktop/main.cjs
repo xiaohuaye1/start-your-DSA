@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell, nativeTheme } = require('electron');
 const path = require('node:path');
+const os = require('node:os');
 const { pathToFileURL } = require('node:url');
 const { Backend } = require('./backend.cjs');
 
@@ -7,6 +8,7 @@ const root = path.join(__dirname, '..');
 const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
 let window, backend;
 let allowClose = false;
+let backgroundMaterial = 'none';
 const methods = ['bootstrap', 'load_stage', 'save_draft', 'save_note', 'complete', 'save_settings', 'judge', 'cancel'];
 
 function checkSender(event) {
@@ -17,13 +19,26 @@ function checkSender(event) {
 app.whenReady().then(async () => {
   try {
     backend = new Backend(root, { dataDir: process.env.DSA_DATA_DIR });
+    nativeTheme.themeSource = 'dark';
     window = new BrowserWindow({ width: 1480, height: 960, minWidth: 1060, minHeight: 740,
       frame: false, show: false, backgroundColor: '#1b1b1b', title: 'Start Your DSA',
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, backgroundThrottling: false,
         nodeIntegration: false, sandbox: true, spellcheck: false } });
+    // Native backdrop needs Windows 11 22H2+. Keep opaque content below the titlebar.
+    if (process.env.DSA_DISABLE_MATERIAL !== '1' && process.platform === 'win32' && Number(os.release().split('.')[2]) >= 22621) {
+      try {
+        window.setBackgroundMaterial('acrylic');
+        window.setBackgroundColor('#00000000');
+        backgroundMaterial = 'acrylic';
+      } catch {
+        window.setBackgroundColor('#1b1b1b');
+      }
+    }
     Menu.setApplicationMenu(null);
-    for (const method of methods) ipcMain.handle(`dsa:${method}`, (event, params) => {
-      checkSender(event); return backend.request(method, params);
+    for (const method of methods) ipcMain.handle(`dsa:${method}`, async (event, params) => {
+      checkSender(event);
+      const result = await backend.request(method, params);
+      return method === 'bootstrap' ? { ...result, backgroundMaterial } : result;
     });
     ipcMain.handle('dsa:pick-compiler', async event => {
       checkSender(event);

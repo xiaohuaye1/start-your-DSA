@@ -4,6 +4,8 @@ JavaScript + Electron 桌面界面，Python + GCC/G++ 本地判题，当前版�
 
 软件使用独立桌面窗口，HTML/CSS/JavaScript 是内部界面文件；不用浏览器打开。课程、笔记、草稿和学习进度由 Python 后端与 SQLite 管理。
 
+左侧栏右边的细分隔条支持拖拽调整宽度，松开后自动保存；双击恢复默认，聚焦后也可用左右方向键微调。小窗口会暂时限制侧栏宽度，放大后恢复原来的设置。顶部使用半透明紫灰黑配色：Windows 11 22H2 及以上启用系统 Acrylic 背景，其他环境自动使用不透明深色底。正文和编辑器保持不透明，字号仍为 13px。
+
 ## 启动
 
 直接双击 **启动.bat** 启动新版。交付到桌面时已安装 Electron 和编辑器依赖；Python 后端需要 Python 3.11 或更高版本及 PySide6.QtCore。
@@ -135,17 +137,19 @@ Electron 主进程启动 Python 服务，通过 stdin/stdout 的 JSON Lines 调�
 
 ```text
 learning.db      草稿、笔记、进度、提交记录（包含源代码）
-settings.json    编译器路径、动画速度、上次打开的环节
+settings.json    编译器路径、动画速度、侧栏宽度、上次打开的环节
 ```
 
 ## 验证
 
 ```powershell
 python -m unittest discover -s tests -v
-node --test tests/javascript.test.mjs tests/advanced.test.mjs tests/final.test.mjs
+node --test tests/javascript.test.mjs tests/advanced.test.mjs tests/final.test.mjs tests/layout.test.mjs
 ```
 
 测试使用临时个人数据，不覆盖自己的学习进度。Python 编译测试需要 PATH 中存在 GCC/G++；未安装时会显示跳过。JavaScript 集成测试需要 GCC 和 PySide6。`tests/electron-smoke.cjs` 使用 Playwright 启动隐藏 Electron 窗口测试真正的界面，需通过 `DSA_PLAYWRIGHT` 指定已安装的 Playwright 模块路径，截图写入 `test-results/`。
+
+`node tests/layout-smoke.cjs` 验证侧栏拖拽、键盘调节、恢复默认、窗口缩放、重启保存、笔记/草稿保留，以及半透明顶部和不透明回退。可用环境变量 `DSA_DISABLE_MATERIAL=1` 强制禁用系统背景材质，便于兼容性排查。
 
 `node tests/learning-smoke.cjs` 逐节验证前五节的真实界面、动画回退、独立草稿和笔记、原始输出、轻量用例及小窗口布局。后端测试同时编译新参考代码的 C/C++ 版本，并检查练习模板可编译。
 
