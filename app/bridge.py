@@ -101,7 +101,10 @@ class Bridge(QObject):
                 result["reference"] = (reference.read_text(encoding="utf-8") if reference.exists()
                                        else self.loader.text(lesson, "reference.c"))
                 draft = self.database.draft(problem.id, language)
-                result["draft"] = problem.starter if draft is None else draft
+                # Never prefill the editor. Ignore an unchanged legacy template, but
+                # preserve the database record and any independently edited draft.
+                template_only = draft is not None and draft.replace("\r\n", "\n") == problem.starter.replace("\r\n", "\n")
+                result["draft"] = "" if draft is None or template_only else draft
                 result["history"] = self.database.recent_submissions(problem.id)
             self.settings.update(last_lesson=lesson.id, last_stage=stage.id)
             return result

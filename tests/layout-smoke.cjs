@@ -93,7 +93,7 @@ async function main() {
     assert.equal(await page.locator('#course-reveal, .tab-add, .document-tabs, #document-title').count(), 0);
     const chrome = await page.evaluate(() => {
       const titlebar = document.querySelector('.titlebar').getBoundingClientRect();
-      const stages = document.getElementById('stage-tabs').getBoundingClientRect();
+      const stages = document.querySelector('.lesson-heading').getBoundingClientRect();
       const button = document.querySelector('[data-window="minimize"]').getBoundingClientRect();
       const icon = document.querySelector('[data-window="minimize"] svg').getBoundingClientRect();
       return { gap: stages.top - titlebar.bottom, iconWidth: icon.width, iconHeight: icon.height,
@@ -101,10 +101,12 @@ async function main() {
         offsetY: (icon.top + icon.bottom - button.top - button.bottom) / 2 };
     });
     assert.equal(chrome.gap, 0);
+    assert.equal(await page.locator('.workspace #stage-tabs, .workspace .learning-stages').count(), 0);
     assert.equal(chrome.iconWidth, 12); assert.equal(chrome.iconHeight, 12);
     assert.ok(Math.abs(chrome.offsetX) < .01 && Math.abs(chrome.offsetY) < .01, '图标在按钮内居中');
     assert.equal(await page.locator('[data-window="minimize"] path').getAttribute('d'), 'M1 6h10');
-    for (const panel of ['courses', 'mindmap', 'notes', 'ai']) {
+    assert.equal(await page.locator('[data-panel="ai"], #panel-ai, #ai-question, #copy-question').count(), 0);
+    for (const panel of ['courses', 'mindmap', 'notes']) {
       await page.locator(`[data-panel="${panel}"]`).click();
       await page.locator(`#panel-${panel}`).waitFor({ state: 'visible' });
     }

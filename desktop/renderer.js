@@ -28,6 +28,7 @@ const courseOutline = [
   { title: '综合练习', lessons: ['数据结构综合训练'] },
 ];
 const courseGroupState = new Map();
+let expandedLesson = null;
 
 function textElement(tag, text, className = '') {
   const element = document.createElement(tag);
@@ -105,7 +106,11 @@ async function saveNotes() {
 async function saveAll() { await Promise.all([saveDraft(), saveNotes()]); toast('代码草稿和笔记已保存'); }
 
 function buildCourses(query = '') {
-  const tree = $('course-tree'); tree.replaceChildren();
+  const tree = $('course-tree');
+  const focused = tree.contains(document.activeElement) ? document.activeElement : null;
+  const focusedId = focused?.id, focusedLesson = focused?.dataset.lesson;
+  const scrollTop = tree.scrollTop;
+  tree.replaceChildren();
   const outlineTitles = new Set(courseOutline.flatMap(group => group.lessons));
   const extra = bootstrap.lessons.filter(lesson => !outlineTitles.has(lesson.title));
   const groups = extra.length ? [...courseOutline, { title: '其他课程', lessons: extra.map(lesson => lesson.title) }] : courseOutline;
@@ -121,44 +126,61 @@ function buildCourses(query = '') {
     group.append(summary);
     group.addEventListener('toggle', () => { if (!query && group.isConnected) courseGroupState.set(chapter.title, group.open); });
     for (const { title, number, lesson } of visible) {
+      const row = textElement('div', '', 'lesson-node');
       const button = textElement('button', '', 'lesson-link');
-      button.append(textElement('span', `${number}.`, 'lesson-number'), textElement('span', title));
+      button.append(icon('chevron'), textElement('span', `${number}.`, 'lesson-number'), textElement('span', title, 'lesson-name'));
       button.disabled = !lesson || busy;
       button.title = lesson ? `打开${title}` : `${title} · 课程待开放`;
       if (lesson) {
+        const expanded = expandedLesson === lesson.id;
         button.dataset.lesson = lesson.id;
+        button.id = `lesson-${lesson.id}`;
+        button.setAttribute('aria-expanded', String(expanded));
+        button.setAttribute('aria-controls', `lesson-stages-${lesson.id}`);
         const active = current?.lesson === lesson.id;
         button.classList.toggle('active', active);
-        if (active) button.setAttribute('aria-current', 'page');
         if (lesson.stages.every(stage => completed.has(`${lesson.id}/${stage.id}`))) button.append(textElement('span', '✓', 'completed-mark'));
-        button.addEventListener('click', guard(() => loadStage(lesson.id, active ? current.stage.id : lesson.stages[0].id)));
+        button.addEventListener('click', guard(async () => {
+          if (loading) return;
+          if (current?.lesson === lesson.id) {
+            expandedLesson = expandedLesson === lesson.id ? null : lesson.id;
+            buildCourses($('course-search').value.trim());
+          } else await loadStage(lesson.id, lesson.stages[0].id);
+        }));
+        row.append(button);
+        const children = textElement('div', '', 'lesson-stages');
+        children.id = `lesson-stages-${lesson.id}`;
+        children.setAttribute('role', 'group'); children.setAttribute('aria-labelledby', button.id);
+        children.hidden = !expanded;
+        if (expanded) for (const stage of lesson.stages) {
+          const child = textElement('button', '', 'lesson-stage');
+          child.append(textElement('span', '', 'stage-dot'), textElement('span', stage.title, 'stage-name'));
+          child.id = `lesson-stage-${lesson.id}-${stage.id}`;
+          child.dataset.lesson = lesson.id; child.dataset.stage = stage.id;
+          child.setAttribute('aria-controls', `${stage.kind}-page`);
+          const selected = active && current.stage.id === stage.id;
+          child.classList.toggle('active', selected);
+          if (selected) child.setAttribute('aria-current', 'page');
+          child.disabled = busy;
+          child.title = `${title} · ${stage.title}`;
+          if (completed.has(`${lesson.id}/${stage.id}`)) child.append(textElement('span', '✓', 'completed-mark'));
+          child.addEventListener('click', guard(() => loadStage(lesson.id, stage.id)));
+          children.append(child);
+        }
+        row.append(children);
+      } else {
+        row.append(button);
       }
-      group.append(button);
+      group.append(row);
     }
     tree.append(group);
   }
   if (!tree.childElementCount) tree.append(textElement('p', '没有匹配的课程', 'empty-courses'));
-  buildStageTabs();
-}
-
-function buildStageTabs() {
-  const focusedStage = document.activeElement?.dataset.stage;
-  const lesson = bootstrap.lessons.find(item => item.id === current?.lesson) || bootstrap.lessons[0];
-  $('stage-tabs').replaceChildren(...lesson.stages.map(stage => {
-    const button = textElement('button', stage.title, 'stage-item');
-    button.dataset.lesson = lesson.id; button.dataset.stage = stage.id;
-    button.id = `stage-tab-${stage.id}`;
-    const active = current ? current.stage.id === stage.id : stage === lesson.stages[0];
-    button.classList.toggle('active', active);
-    button.setAttribute('role', 'tab'); button.setAttribute('aria-selected', String(active));
-    button.setAttribute('aria-controls', `${stage.kind}-page`);
-    button.tabIndex = active ? 0 : -1;
-    button.disabled = busy;
-    if (completed.has(`${lesson.id}/${stage.id}`)) button.append(textElement('span', '✓', 'completed-mark'));
-    button.addEventListener('click', guard(() => loadStage(lesson.id, stage.id)));
-    return button;
-  }));
-  if (focusedStage) document.getElementById(`stage-tab-${focusedStage}`)?.focus();
+  tree.scrollTop = scrollTop;
+  if (focusedId) {
+    const target = $(focusedId) || $(`lesson-${focusedLesson}`);
+    if (target && !target.disabled) target.focus({ preventScroll: true });
+  }
 }
 
 function updateProgress(values) {
@@ -174,15 +196,17 @@ async function loadStage(lesson, stage, options = {}) {
   if (busy) { toast('请等待判题结束，或先点击“停止”。'); $('language').value = language; return; }
   if (loading) return;
   pause(); loading = true;
+  $('course-tree').setAttribute('aria-busy', 'true');
   try {
     await Promise.all([saveDraft(), saveNotes()]);
     const nextLanguage = options.language || language;
     const next = await api.loadStage({ lesson, stage, language: nextLanguage });
     current = next; language = nextLanguage;
+    expandedLesson = current.lesson;
     $('language').value = language;
     $('lesson-title').textContent = current.title;
     const chapter = courseOutline.find(group => group.lessons.includes(current.title));
-    $('breadcrumb').textContent = `${chapter?.title || '课程'}  /  ${current.title}`;
+    $('breadcrumb').textContent = `${chapter?.title || '课程'}  /  ${current.title}  /  ${current.stage.title}`;
     $('animation-tools').hidden = current.stage.kind !== 'animation';
     $('stage-badge').hidden = current.stage.kind === 'animation';
     $('stage-badge').textContent = current.stage.kind === 'animation' ? '可视化学习' : current.stage.kind === 'practice' ? '动手编程' : '知识拓展';
@@ -208,7 +232,8 @@ async function loadStage(lesson, stage, options = {}) {
       $('array-input').value = demo ? demo.defaults.join(', ') : current.stage.source === 'binary_search' ? '1, 2, 3, 4, 5, 6, 7, 8' : '5, 2, 8, 1, 6, 3, 7, 4';
       generate();
     } else if (current.stage.kind === 'practice') {
-      markdown($('statement'), current.problem.statement);
+      const writingNote = '> 请自行编写完整程序（包含 main 和输入输出）。编辑器不自动填入代码；题目中的“补全”指需要实现的功能，“参考代码”可单独查看。\n\n';
+      markdown($('statement'), writingNote + current.problem.statement);
       $('reference-code').textContent = current.reference;
       editor.setValue(current.draft, -1); draftDirty = false;
       $('draft-state').textContent = '已保存';
@@ -220,12 +245,13 @@ async function loadStage(lesson, stage, options = {}) {
       requestAnimationFrame(() => editor.resize());
     }
     updateProgress();
+    if (!$('panel-courses').hidden) document.querySelector('.lesson-stage.active')?.closest('.lesson-node').scrollIntoView({ block: 'nearest' });
     $('status-message').textContent = `${current.title} · ${current.stage.title}`;
-  } finally { loading = false; $('language').value = language; }
+  } finally { loading = false; $('course-tree').setAttribute('aria-busy', 'false'); $('language').value = language; }
 }
 
 function showPanel(panel) {
-  const titles = { courses: '数据结构与算法', mindmap: '思维导图', notes: '笔记本', ai: 'AI 辅助' };
+  const titles = { courses: '数据结构与算法', mindmap: '思维导图', notes: '笔记本' };
   $('sidebar-title').textContent = titles[panel];
   for (const key of Object.keys(titles)) $('panel-' + key).hidden = panel !== key;
   document.querySelectorAll('[data-panel]').forEach(button => button.classList.toggle('active', button.dataset.panel === panel));
@@ -743,15 +769,26 @@ function attachEvents() {
     const selected = await api.pickCompiler(); if (selected) $(button.dataset.compiler).value = selected;
   })));
   $('course-search').addEventListener('input', () => buildCourses($('course-search').value.trim()));
-  $('stage-tabs').addEventListener('keydown', event => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) || busy || loading) return;
-    const tabs = [...$('stage-tabs').querySelectorAll('button')];
-    const index = tabs.indexOf(document.activeElement);
-    if (index < 0) return;
-    event.preventDefault();
-    const target = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
-      : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-    tabs[target].focus(); tabs[target].click();
+  $('course-tree').addEventListener('keydown', event => {
+    const target = event.target.closest('.lesson-link, .lesson-stage');
+    if (!target || busy || loading || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      if (target.dataset.stage) $(`lesson-${target.dataset.lesson}`)?.focus();
+      else if (target.getAttribute('aria-expanded') === 'true') target.click();
+    } else if (event.key === 'ArrowRight' && !target.dataset.stage) {
+      event.preventDefault();
+      if (target.getAttribute('aria-expanded') !== 'true') target.click();
+      else target.closest('.lesson-node').querySelector('.lesson-stage')?.focus();
+    } else if (['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault();
+      const items = [...$('course-tree').querySelectorAll('.lesson-link, .lesson-stage')]
+        .filter(button => !button.disabled && button.getClientRects().length);
+      const index = items.indexOf(target);
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
+        : Math.max(0, Math.min(items.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1)));
+      items[next]?.focus();
+    }
   });
   $('generate').addEventListener('click', guard(generate));
   $('array-input').addEventListener('keydown', event => { if (event.key === 'Enter') guard(generate)(); });
@@ -776,7 +813,6 @@ function attachEvents() {
     noteDirty = true; $('note-state').textContent = '正在保存…'; clearTimeout(noteTimer);
     noteTimer = setTimeout(() => saveNotes().catch(error => toast(error.message)), 500);
   });
-  $('copy-question').addEventListener('click', guard(async () => { await navigator.clipboard.writeText($('ai-question').value); toast('问题已复制'); }));
   $('help-open').addEventListener('click', () => $('help-dialog').showModal());
   $('problem-source').addEventListener('click', guard(() => api.openSource({ url: current.problem.source.url })));
   $('settings-open').addEventListener('click', () => {

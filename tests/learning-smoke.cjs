@@ -45,9 +45,11 @@ async function main() {
     for (let index = 0; index < lessons.length; ++index) {
       const [lesson, title, source, problem] = lessons[index];
       await page.locator(`.lesson-link[data-lesson="${lesson}"]`).click();
+      if (await page.locator('.lesson-stage').count() === 0)
+        await page.locator(`.lesson-link[data-lesson="${lesson}"]`).click();
       await page.waitForFunction(source => document.getElementById('array-canvas').dataset.demo === source, source);
       assert.equal(await page.locator('#lesson-title').innerText(), title);
-      assert.equal(await page.locator('#stage-tabs [role="tab"]').count(), 3);
+      assert.equal(await page.locator('#course-tree .lesson-stage').count(), 3);
       assert.ok(await page.locator('.scene-code-line').count() >= 4);
       const initial = await page.locator('#variables').innerText();
       await page.locator('#next').click();

@@ -37,7 +37,7 @@ async function main() {
     await page.waitForFunction(() => document.getElementById('lesson-title').textContent === '冒泡排序');
     await page.locator('.array-cell').first().waitFor();
     assert.equal(await page.locator('.array-cell').count(), 8);
-    assert.equal(await page.locator('#stage-tabs [role="tab"]').count(), 3);
+    assert.equal(await page.locator('#course-tree .lesson-stage').count(), 3);
     assert.equal(await page.locator('[data-stage="extension"]').count(), 0);
     const typography = await page.evaluate(() => ({
       body: getComputedStyle(document.body).fontSize,

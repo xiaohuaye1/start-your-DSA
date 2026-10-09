@@ -212,9 +212,11 @@ test('JavaScript/Python 通信：课程、原有数据库、草稿、判题和�
     const exam = await backend.request('load_stage', { lesson: 'sorting.bubble_sort', stage: 'exam', language: 'C' });
     assert.equal(exam.problem.source.id, 'P1177');
     assert.equal(exam.problem.caseCount, 3);
+    assert.equal(exam.draft, '');
     const params = { lesson: 'sorting.bubble_sort', stage: 'practice', language: 'C' };
     const stage = await backend.request('load_stage', params);
     assert.equal(stage.problem.caseCount, 3);
+    assert.equal(stage.draft, '');
     await backend.request('save_note', { lesson: params.lesson, text: '跨界面保存的笔记' });
     await backend.request('save_draft', { ...params, code: stage.reference });
     assert.equal((await backend.request('load_stage', params)).draft, stage.reference);

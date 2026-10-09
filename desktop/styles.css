@@ -47,6 +47,8 @@ body.resizing-sidebar, body.resizing-sidebar * { cursor: col-resize !important; 
 .sidebar-heading h2 { font-size: 13px; font-weight: 600 }
 .sidebar-panel { min-height: 0; flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 12px; padding: 0 8px 12px }
 .sidebar-panel:not(#panel-courses) { padding: 0 13px 14px }
+#panel-courses { overflow: hidden }
+#course-tree { flex: 1; min-height: 0; overflow: auto }
 .search-box { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 4px; margin: 0 5px; padding: 0 7px; background: #242424; flex-shrink: 0 }
 .search-box svg { width: 14px; height: 14px; color: #909090 }
 .search-box input { border: 0; background: transparent; padding: 6px; width: 100%; min-width: 0; font-size: 12px }
@@ -54,15 +56,25 @@ body.resizing-sidebar, body.resizing-sidebar * { cursor: col-resize !important; 
 .course-group summary { list-style: none; display: flex; align-items: center; gap: 9px; padding: 6px; cursor: pointer; font-size: 12px; color: #e0e0e0; min-height: 29px }
 .course-group summary::-webkit-details-marker { display: none }
 .course-group summary svg { width: 12px; height: 12px; transform: rotate(90deg); color: #adadad }
-.course-group:not([open]) summary svg { transform: none }
+.course-group:not([open]) > summary svg { transform: none }
 .course-availability { margin-left: auto; font-size: 10px; font-weight: 400; color: #858585 }
-.lesson-link { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 28px; text-align: left; padding: 5px 8px 5px 26px; background: transparent; border-radius: 4px; font-size: 12px; line-height: 1.45 }
+.lesson-link { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 28px; text-align: left; padding: 5px 8px 5px 6px; background: transparent; border-radius: 4px; font-size: 12px; line-height: 1.45 }
+.lesson-link > svg { width: 11px; height: 11px; color: #929292 }
+.lesson-link[aria-expanded="true"] > svg { transform: rotate(90deg) }
+.lesson-name, .stage-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .lesson-number { width: 21px; flex-shrink: 0; text-align: right; color: #a9a9a9; font-family: var(--mono); font-size: 11px }
 .lesson-link:hover:not(:disabled) { background: #2c2c2c }
-.lesson-link.active { background: #373737; color: #f4f4f4 }
+.lesson-link.active { background: #ffffff06; color: #f4f4f4 }
 .lesson-link:disabled { color: #939393; opacity: 1 }
 .lesson-link:disabled .lesson-number { color: #787878 }
 .lesson-link .completed-mark { margin-left: auto; color: var(--green) }
+.lesson-stages { margin: 2px 3px 6px 31px; padding-left: 9px; border-left: 1px solid #444 }
+.lesson-stage { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 27px; padding: 5px 8px; text-align: left; background: transparent; border-radius: 4px; font-size: 12px; line-height: 1.45; color: #aaa }
+.lesson-stage:hover:not(:disabled) { background: #ffffff08; color: #e0e0e0 }
+.lesson-stage.active { background: #373737; color: #f4f4f4 }
+.stage-dot { width: 5px; height: 5px; border-radius: 50%; background: #858585; flex-shrink: 0 }
+.lesson-stage.active .stage-dot { background: var(--amber) }
+.lesson-stage .completed-mark { margin-left: auto; font-size: 10px; color: var(--green) }
 .empty-courses { padding: 20px 8px; font-size: 12px; line-height: 1.8; color: var(--muted) }
 .sidebar-progress { flex-shrink: 0; padding: 12px 15px 10px; border-top: 1px solid var(--border) }
 .sidebar-progress > div:first-child { display: flex; justify-content: space-between; font-size: 11px; color: #b6b6b6 }
@@ -72,22 +84,15 @@ body.resizing-sidebar, body.resizing-sidebar * { cursor: col-resize !important; 
 .sidebar-progress p { margin-top: 8px; color: #858585; font-size: 10px }
 .sidebar-description { font-size: 12px; line-height: 1.8; color: #b0b0b0 }
 .sidebar-panel textarea { width: 100%; flex: 1; min-height: 160px; font-size: 12px; padding: 10px; background: #1b1b1b }
-.save-hint, .feature-label { color: var(--muted); font-size: 11px }
-.feature-label { align-self: flex-start; border: 1px solid #404040; padding: 4px 8px; border-radius: 4px }
+.save-hint { color: var(--muted); font-size: 11px }
+.statement-panel > .markdown > blockquote { margin: 0 0 14px; padding: 8px 10px; border-left: 2px solid #525252; background: #ffffff03; color: var(--muted); font-size: 11px; line-height: 1.7 }
+.statement-panel > .markdown > blockquote p { margin: 0 }
 .knowledge-node { border: 1px solid #444; border-radius: 4px; background: #292929; padding: 10px; margin-bottom: 15px }
 .knowledge-branch { border-left: 1px solid #494949; margin-left: 8px; padding: 0 0 15px 14px; position: relative }
 .knowledge-branch:before { content: ''; position: absolute; left: 0; top: 9px; width: 9px; height: 1px; background: #494949 }
 .knowledge-branch h4 { margin: 0 0 7px; font-size: 12px; font-weight: 500 }
 .knowledge-branch p { font-size: 11px; line-height: 1.9; color: #a7a7a7 }
 .workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg) }
-.learning-stages { display: flex; gap: 0; padding: 6px 8px; height: 48px; border-bottom: 1px solid var(--border); background: #202020; flex-shrink: 0 }
-.stage-item { min-width: 106px; padding: 0 17px; background: #242424; color: #aaa; border: 1px solid #363636; border-right: 0; position: relative; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 7px }
-.stage-item:first-child { border-radius: 4px 0 0 4px }
-.stage-item:last-child { border-right: 1px solid #363636; border-radius: 0 4px 4px 0 }
-.stage-item:hover { color: #eee; background: #2d2d2d }
-.stage-item.active { color: #eee; background: #2e2e2e }
-.stage-item.active:after { position: absolute; content: ''; height: 2px; background: var(--amber); bottom: -1px; left: 0; right: 0 }
-.stage-item .completed-mark { color: var(--green); font-size: 10px }
 .lesson-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 52px; padding: 9px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0 }
 .lesson-identity { display: flex; align-items: center; gap: 20px; min-width: 0 }
 .lesson-heading h1 { font-size: 18px; font-weight: 600; white-space: nowrap }

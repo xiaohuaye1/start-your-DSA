@@ -68,6 +68,37 @@ def expected_answer(lesson, stage, tokens):
 
 
 class CoreTests(unittest.TestCase):
+    def test_practice_editors_start_blank_and_preserve_personal_drafts(self):
+        from PySide6.QtCore import QCoreApplication
+        from app.bridge import Bridge
+        application = QCoreApplication.instance() or QCoreApplication([])
+        with tempfile.TemporaryDirectory() as temporary:
+            bridge = Bridge(Path(temporary))
+            try:
+                count = 0
+                for lesson in bridge.loader.lessons.values():
+                    for stage in lesson.stages:
+                        if stage.kind != "practice":
+                            continue
+                        problem = bridge.loader.problem(lesson, stage.source)
+                        for language in ("C", "C++"):
+                            params = {"lesson": lesson.id, "stage": stage.id, "language": language}
+                            self.assertEqual(bridge.call("load_stage", params)["draft"], "")
+                            legacy_template = problem.starter.replace("\n", "\r\n")
+                            bridge.database.save_draft(problem.id, language, legacy_template)
+                            self.assertEqual(bridge.call("load_stage", params)["draft"], "")
+                            self.assertEqual(bridge.database.draft(problem.id, language), legacy_template,
+                                             "Legacy records are not deleted from the database")
+                            authored = problem.starter + "\n/* my changes */\n"
+                            bridge.database.save_draft(problem.id, language, authored)
+                            self.assertEqual(bridge.call("load_stage", params)["draft"], authored)
+                            bridge.database.save_draft(problem.id, language, "")
+                            self.assertEqual(bridge.call("load_stage", params)["draft"], "")
+                            count += 1
+                self.assertEqual(count, 112)
+            finally:
+                bridge.database.close()
+
     def test_sidebar_settings_persist_without_changing_learning_or_compiler_settings(self):
         from PySide6.QtCore import QCoreApplication
         from app.bridge import Bridge
