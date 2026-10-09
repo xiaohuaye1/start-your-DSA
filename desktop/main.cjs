@@ -18,7 +18,8 @@ function checkSender(event) {
 
 app.whenReady().then(async () => {
   try {
-    backend = new Backend(root, { dataDir: process.env.DSA_DATA_DIR });
+    backend = new Backend(root, { dataDir: process.env.DSA_DATA_DIR,
+      packaged: app.isPackaged, resourcesPath: process.resourcesPath });
     nativeTheme.themeSource = 'dark';
     window = new BrowserWindow({ width: 1480, height: 960, minWidth: 1060, minHeight: 740,
       frame: false, show: false, backgroundColor: '#1b1b1b', title: 'Start Your DSA',

@@ -1,0 +1,6 @@
+{
+  "name": "start-your-dsa-build-tools",
+  "private": true,
+  "version": "1.0.0",
+  "devDependencies": { "electron-builder": "26.15.3" }
+}

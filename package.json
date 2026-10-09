@@ -6,9 +6,9 @@
   "type": "module",
   "main": "desktop/main.cjs",
   "scripts": {
-    "start": "electron .",
     "test": "node --test tests/javascript.test.mjs tests/advanced.test.mjs tests/final.test.mjs tests/layout.test.mjs",
-    "test:desktop": "node tests/electron-smoke.cjs"
+    "test:desktop": "node tests/electron-smoke.cjs",
+    "pack:win": "node packaging/build.cjs"
   },
   "dependencies": {
     "ace-builds": "1.44.0",

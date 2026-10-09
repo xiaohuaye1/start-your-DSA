@@ -1,8 +1,10 @@
 __pycache__/
 *.pyc
 .venv/
+.build-venv/
 build/
 dist/
+release/
 *.egg-info/
 .pytest_cache/
 preview-*.png

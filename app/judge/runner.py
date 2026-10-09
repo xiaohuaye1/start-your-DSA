@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from PySide6.QtCore import QObject, QProcess, QProcessEnvironment, QTimer, QElapsedTimer, Signal
 from app.models import JudgeResult, CaseResult
-from app.judge.compiler import resolve_compiler, arguments
+from app.judge.compiler import resolve_compiler, compiler_environment, arguments
 from app.judge.checker import verdict
 
 
@@ -54,6 +54,8 @@ class JudgeRunner(QObject):
             self.executable = directory / ("program.exe" if os.name == "nt" else "program")
             environment = QProcessEnvironment.systemEnvironment()
             environment.insert("PATH", str(Path(compiler).parent) + os.pathsep + environment.value("PATH"))
+            for key, value in compiler_environment(compiler).items():
+                environment.insert(key, value)
             self.environment = environment
             self.process.setWorkingDirectory(str(directory))
             self.log.emit(f"编译：{compiler}（{language}）")

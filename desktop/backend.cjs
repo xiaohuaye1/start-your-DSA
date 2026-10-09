@@ -12,7 +12,7 @@ function findPython(root) {
     const result = spawnSync(candidate, ['-c', 'import PySide6.QtCore'], { windowsHide: true, timeout: 5000 });
     if (!result.error && result.status === 0) return candidate;
   }
-  throw new Error('找不到安装了 PySide6 的 Python。请运行“安装依赖.bat”。');
+  throw new Error('开发环境缺少安装了 PySide6 的 Python，请查看 packaging/README.md。普通用户请下载 EXE 版本。');
 }
 
 class Backend extends EventEmitter {
@@ -20,11 +20,19 @@ class Backend extends EventEmitter {
     super();
     this.pending = new Map();
     this.serial = 0;
-    const python = options.python || findPython(root);
-    const args = ['-u', '-m', 'app.bridge'];
+    const packaged = options.packaged === true;
+    const executable = packaged ? path.join(options.resourcesPath, 'backend', 'DSABackend.exe')
+      : options.python || findPython(root);
+    if (packaged && !fs.existsSync(executable)) throw new Error('软件内置服务缺失，请重新解压或下载完整软件包。');
+    const args = packaged ? [] : ['-u', '-m', 'app.bridge'];
     if (options.dataDir) args.push('--data-dir', options.dataDir);
-    this.process = spawn(python, args, { cwd: root, windowsHide: true,
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, stdio: ['pipe', 'pipe', 'pipe'] });
+    const env = { ...process.env, PYTHONIOENCODING: 'utf-8' };
+    if (packaged) {
+      env.DSA_TOOLCHAIN = path.join(options.resourcesPath, 'toolchain');
+      delete env.PYTHONHOME; delete env.PYTHONPATH; delete env.DSA_PYTHON;
+    }
+    this.process = spawn(executable, args, { cwd: packaged ? path.dirname(executable) : root, windowsHide: true,
+      env, stdio: ['pipe', 'pipe', 'pipe'] });
     this.stderr = '';
     this.closed = false;
     this.process.stderr.on('data', chunk => { this.stderr = (this.stderr + chunk.toString()).slice(-12000); });

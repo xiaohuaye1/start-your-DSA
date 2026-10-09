@@ -892,7 +892,7 @@ function attachEvents() {
 }
 
 async function start() {
-  if (!api) throw new Error('请使用“启动.bat”打开桌面软件，直接用浏览器打开不能调用编译器。');
+  if (!api) throw new Error('请下载并打开 Start Your DSA 的 EXE，直接用浏览器打开源码页面不能调用编译器。');
   makeEditor(); attachEvents();
   bootstrap = await api.bootstrap();
   document.documentElement.classList.toggle('native-material', bootstrap.backgroundMaterial === 'acrylic');
