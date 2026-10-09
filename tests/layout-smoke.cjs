@@ -90,7 +90,20 @@ async function main() {
     assert.equal(theme.railBlur, theme.blur);
     assert.equal(theme.railDrag, 'no-drag');
     assert.equal(theme.sidebar, 'rgb(32, 32, 32)');
-    assert.equal(await page.locator('#course-reveal, .tab-add, .document-tabs button').count(), 0);
+    assert.equal(await page.locator('#course-reveal, .tab-add, .document-tabs, #document-title').count(), 0);
+    const chrome = await page.evaluate(() => {
+      const titlebar = document.querySelector('.titlebar').getBoundingClientRect();
+      const stages = document.getElementById('stage-tabs').getBoundingClientRect();
+      const button = document.querySelector('[data-window="minimize"]').getBoundingClientRect();
+      const icon = document.querySelector('[data-window="minimize"] svg').getBoundingClientRect();
+      return { gap: stages.top - titlebar.bottom, iconWidth: icon.width, iconHeight: icon.height,
+        offsetX: (icon.left + icon.right - button.left - button.right) / 2,
+        offsetY: (icon.top + icon.bottom - button.top - button.bottom) / 2 };
+    });
+    assert.equal(chrome.gap, 0);
+    assert.equal(chrome.iconWidth, 12); assert.equal(chrome.iconHeight, 12);
+    assert.ok(Math.abs(chrome.offsetX) < .01 && Math.abs(chrome.offsetY) < .01, '图标在按钮内居中');
+    assert.equal(await page.locator('[data-window="minimize"] path').getAttribute('d'), 'M1 6h10');
     for (const panel of ['courses', 'mindmap', 'notes', 'ai']) {
       await page.locator(`[data-panel="${panel}"]`).click();
       await page.locator(`#panel-${panel}`).waitFor({ state: 'visible' });
@@ -117,6 +130,20 @@ async function main() {
     await drag(138); assert.equal(await width(), 360);
     await assertLayout();
     await screenshot(application, 'resizable-sidebar-large.png');
+    await page.locator('[data-window="minimize"]').click();
+    const minimized = await application.evaluate(async ({ BrowserWindow }) => {
+      const window = BrowserWindow.getAllWindows()[0];
+      for (let attempt = 0; attempt < 30 && !window.isMinimized(); attempt++)
+        await new Promise(resolve => setTimeout(resolve, 50));
+      return window.isMinimized();
+    });
+    assert.equal(minimized, true, '窗口按钮应执行原生最小化');
+    console.log('Native minimize passed');
+    await application.evaluate(({ BrowserWindow }) => {
+      const window = BrowserWindow.getAllWindows()[0];
+      // Restoring then hiding suppresses requestAnimationFrame used by layout assertions.
+      window.restore();
+    });
     await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1060, 740));
     await page.waitForFunction(() => innerWidth === 1060 && document.getElementById('sidebar').offsetWidth === 243);
     assert.equal(await width(), 243); await assertLayout();
@@ -145,7 +172,7 @@ async function main() {
     await close(page);
     assert.equal((await settings()).sidebar_width, 0);
     assert.deepEqual(errors, []);
-    console.log('Layout passed: no tab plus, matching glass titlebar/rail, rail navigation, drag bounds, keyboard/reset, small window/editor, restart persistence, draft/note preservation and opaque fallback.');
+    console.log('Layout passed: no document tab strip, centered SVG controls, native minimize/restore, glass titlebar/rail, navigation, resizing, restart persistence, draft/note preservation and opaque fallback.');
   } finally {
     if (application) await application.close();
     if (path.dirname(dataDir) !== os.tmpdir() || !path.basename(dataDir).startsWith('dsa-layout-test-'))

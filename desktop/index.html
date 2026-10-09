@@ -32,7 +32,7 @@
   <header class="titlebar">
     <div class="brand">Start Your DSA</div>
     <button id="help-open" class="menu-button">帮助</button><button id="settings-open" class="menu-button">设置</button>
-    <div class="window-buttons"><button data-window="minimize" aria-label="最小化">—</button><button data-window="maximize" aria-label="最大化">□</button><button data-window="close" class="window-close" aria-label="关闭">×</button></div>
+    <div class="window-buttons"><button data-window="minimize" aria-label="最小化" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10"/></svg></button><button data-window="maximize" aria-label="最大化" title="最大化 / 还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9"/></svg></button><button data-window="close" class="window-close" aria-label="关闭" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m1.5 1.5 9 9m0-9-9 9"/></svg></button></div>
   </header>
   <div class="app-body">
     <nav class="activity-rail" aria-label="主导航">
@@ -55,7 +55,6 @@
     </aside>
     <div id="sidebar-resizer" class="sidebar-resizer" role="separator" tabindex="0" aria-label="调整左侧栏宽度" aria-orientation="vertical" aria-controls="sidebar" aria-valuemin="180" aria-valuemax="420" aria-valuenow="222" title="拖拽调整宽度 · 双击恢复默认 · 方向键微调"></div>
     <main class="workspace">
-      <div class="document-tabs"><div class="document-tab"><svg><use href="#i-book"/></svg><span id="document-title">冒泡排序</span></div></div>
       <nav id="stage-tabs" class="learning-stages" role="tablist" aria-label="学习环节"></nav>
       <div class="lesson-heading"><div class="lesson-identity"><h1 id="lesson-title">冒泡排序</h1><div class="breadcrumb" id="breadcrumb">查找与排序 / 冒泡排序</div></div><div id="animation-tools" class="animation-tools"><label class="round-choice"><span id="round-label" class="sr-only">当前轮次</span><select id="round-select" aria-label="跳转轮次"></select></label><label class="array-input"><span id="animation-input-label">初始数组</span><input id="array-input" value="5, 2, 8, 1, 6, 3, 7, 4" aria-label="输入数组"><input id="target-input" value="6" aria-label="查找目标" hidden></label><button id="generate" class="button compact">生成数组</button><button id="reset-view" class="button compact"><svg><use href="#i-reset"/></svg>重置</button></div><span class="stage-badge" id="stage-badge" hidden>动手编程</span><button id="problem-source" class="button compact" hidden>洛谷原题 ↗</button></div>
       <section id="animation-page" class="page">

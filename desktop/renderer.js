@@ -180,7 +180,6 @@ async function loadStage(lesson, stage, options = {}) {
     const next = await api.loadStage({ lesson, stage, language: nextLanguage });
     current = next; language = nextLanguage;
     $('language').value = language;
-    $('document-title').textContent = current.title;
     $('lesson-title').textContent = current.title;
     const chapter = courseOutline.find(group => group.lessons.includes(current.title));
     $('breadcrumb').textContent = `${chapter?.title || '课程'}  /  ${current.title}`;
