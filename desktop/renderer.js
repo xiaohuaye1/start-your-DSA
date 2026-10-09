@@ -744,7 +744,6 @@ function attachEvents() {
     const selected = await api.pickCompiler(); if (selected) $(button.dataset.compiler).value = selected;
   })));
   $('course-search').addEventListener('input', () => buildCourses($('course-search').value.trim()));
-  $('course-reveal').addEventListener('click', () => { showPanel('courses'); $('course-search').focus(); });
   $('stage-tabs').addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) || busy || loading) return;
     const tabs = [...$('stage-tabs').querySelectorAll('button')];

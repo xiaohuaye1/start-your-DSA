@@ -70,9 +70,13 @@ async function main() {
     assert.equal(await width(), 222);
     const theme = await page.evaluate(async () => {
       const title = getComputedStyle(document.querySelector('.titlebar'));
+      const rail = getComputedStyle(document.querySelector('.activity-rail'));
       const boot = await window.dsa.bootstrap();
       return { size: getComputedStyle(document.body).fontSize, title: title.backgroundColor,
         blur: title.backdropFilter, drag: title.webkitAppRegion,
+        rail: rail.backgroundColor, railImage: rail.backgroundImage, titleImage: title.backgroundImage,
+        railBlur: rail.backdropFilter, railDrag: rail.webkitAppRegion,
+        sidebar: getComputedStyle(document.getElementById('sidebar')).backgroundColor,
         control: getComputedStyle(document.querySelector('[data-window="close"]')).webkitAppRegion,
         material: boot.backgroundMaterial, transparent: document.documentElement.classList.contains('native-material') };
     });
@@ -81,6 +85,17 @@ async function main() {
     assert.match(theme.blur, /blur\(18px\)/);
     assert.equal(theme.drag, 'drag'); assert.equal(theme.control, 'no-drag');
     assert.equal(theme.transparent, theme.material === 'acrylic');
+    assert.equal(theme.rail, theme.title);
+    assert.equal(theme.railImage, theme.titleImage);
+    assert.equal(theme.railBlur, theme.blur);
+    assert.equal(theme.railDrag, 'no-drag');
+    assert.equal(theme.sidebar, 'rgb(32, 32, 32)');
+    assert.equal(await page.locator('#course-reveal, .tab-add, .document-tabs button').count(), 0);
+    for (const panel of ['courses', 'mindmap', 'notes', 'ai']) {
+      await page.locator(`[data-panel="${panel}"]`).click();
+      await page.locator(`#panel-${panel}`).waitFor({ state: 'visible' });
+    }
+    await page.locator('[data-panel="courses"]').click();
     await drag(140); assert.equal(await width(), 362);
     console.log('First drag width:', await width());
     await page.waitForFunction(async () => (await window.dsa.bootstrap()).settings.sidebar_width === 362);
@@ -130,7 +145,7 @@ async function main() {
     await close(page);
     assert.equal((await settings()).sidebar_width, 0);
     assert.deepEqual(errors, []);
-    console.log('Layout passed: drag bounds, keyboard/reset, all side panels, small window/editor, restart persistence, draft/note preservation, translucent titlebar and opaque fallback.');
+    console.log('Layout passed: no tab plus, matching glass titlebar/rail, rail navigation, drag bounds, keyboard/reset, small window/editor, restart persistence, draft/note preservation and opaque fallback.');
   } finally {
     if (application) await application.close();
     if (path.dirname(dataDir) !== os.tmpdir() || !path.basename(dataDir).startsWith('dsa-layout-test-'))
