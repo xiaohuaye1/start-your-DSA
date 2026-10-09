@@ -1,4 +1,5 @@
 import { bubbleSteps, binarySteps, parseArray } from './algorithms.js';
+import { learningDemos, learningSteps, parseLearningInput, lessonDemo } from './learning-demos.js';
 
 const $ = id => document.getElementById(id);
 const api = window.dsa;
@@ -9,6 +10,8 @@ let completed = new Set();
 let terminalSize = 0, terminalTruncated = false;
 const actionNames = { start: '准备开始', compare: '比较相邻元素', swap: '交换元素', keep: '保持顺序',
   settle: '完成这一轮', done: '演示完成', narrow: '缩小查找区间' };
+const learningActionNames = { read: '读取元素', accumulate: '更新总和', push: '入栈', pop: '出栈',
+  execute: '循环执行', inspect: '比较记录', update: '更新数据', access: '下标访问' };
 const courseOutline = [
   { title: '入门篇', lessons: ['算法与复杂度', '数据结构简介', '算法分析', '结构体回顾与学习'] },
   { title: '线性结构', lessons: ['数组', '链表', '循环链表', '双向链表', '栈', '队列', '循环队列'] },
@@ -184,16 +187,26 @@ async function loadStage(lesson, stage, options = {}) {
     $('note-state').textContent = '自动保存'; noteDirty = false;
     updateKnowledgeTree();
     if (current.stage.kind === 'animation') {
+      const demo = learningDemos[current.stage.source];
+      $('array-canvas').classList.toggle('learning-mode', Boolean(demo));
+      $('concept-scene').hidden = !demo;
+      $('animation-input-label').textContent = demo?.inputLabel || '初始数组';
+      $('generate').textContent = demo ? '生成演示' : '生成数组';
+      $('array-input').placeholder = demo ? '1～8 个整数' : '1～16 个整数';
+      $('counter-one-label').textContent = demo?.counters[0] || '比较';
+      $('counter-two-label').textContent = demo?.counters[1] || '交换';
+      $('legend-active').textContent = demo ? '当前操作' : '当前比较';
+      $('legend-complete').textContent = demo ? '已处理' : '已归位';
       markdown($('aux-explanation'), current.markdown);
       $('target-input').hidden = current.stage.source !== 'binary_search';
-      $('array-input').value = current.stage.source === 'binary_search' ? '1, 2, 3, 4, 5, 6, 7, 8' : '5, 2, 8, 1, 6, 3, 7, 4';
+      $('array-input').value = demo ? demo.defaults.join(', ') : current.stage.source === 'binary_search' ? '1, 2, 3, 4, 5, 6, 7, 8' : '5, 2, 8, 1, 6, 3, 7, 4';
       generate();
     } else if (current.stage.kind === 'practice') {
       markdown($('statement'), current.problem.statement);
       $('reference-code').textContent = current.reference;
       editor.setValue(current.draft, -1); draftDirty = false;
       $('draft-state').textContent = '已保存';
-      const filename = current.problem.source?.id.toLowerCase() || 'bubble_sort';
+      const filename = current.problem.source?.id.toLowerCase() || (current.lesson === 'sorting.bubble_sort' ? 'bubble_sort' : current.lesson.split('.').at(-1));
       $('filename').textContent = `${filename}.${language === 'C' ? 'c' : 'cpp'}`;
       if (current.problem.source) $('stage-badge').textContent = `${current.problem.source.platform} ${current.problem.source.id}`;
       clearOutput(); renderHistory(current.history);
@@ -215,9 +228,9 @@ function showPanel(panel) {
 function updateKnowledgeTree() {
   const tree = $('knowledge-tree'); tree.replaceChildren();
   tree.append(textElement('div', current.title, 'knowledge-node'));
-  const branches = current.stage.source === 'binary_search'
+  const branches = lessonDemo(current.lesson)?.knowledge || (current.stage.source === 'binary_search'
     ? { 前提: ['数组必须有序'], 过程: ['取中点', '排除一半区间', '检查空区间'], 复杂度: ['时间 O(log n)', '空间 O(1)'] }
-    : { 核心思路: ['比较相邻元素', '交换逆序元素', '逐轮归位'], 复杂度: ['一般 / 最坏 O(n²)', '提前结束时最好 O(n)', '额外空间 O(1)'], 算法性质: ['稳定排序', '原地排序'], 边界情况: ['单个元素', '重复值与负数', '已经有序', '完全逆序'] };
+    : { 核心思路: ['比较相邻元素', '交换逆序元素', '逐轮归位'], 复杂度: ['一般 / 最坏 O(n²)', '提前结束时最好 O(n)', '额外空间 O(1)'], 算法性质: ['稳定排序', '原地排序'], 边界情况: ['单个元素', '重复值与负数', '已经有序', '完全逆序'] });
   for (const [name, leaves] of Object.entries(branches)) {
     const branch = textElement('div', '', 'knowledge-branch');
     branch.append(textElement('h4', name));
@@ -226,9 +239,12 @@ function updateKnowledgeTree() {
 }
 
 function generate() {
-  const values = parseArray($('array-input').value);
+  $('array-canvas').dataset.demo = current.stage.source;
+  const demo = learningDemos[current.stage.source];
+  const values = demo ? parseLearningInput(current.stage.source, $('array-input').value) : parseArray($('array-input').value);
   let generated;
-  if (current.stage.source === 'binary_search') {
+  if (demo) generated = learningSteps(current.stage.source, values);
+  else if (current.stage.source === 'binary_search') {
     const target = Number($('target-input').value);
     if (!Number.isSafeInteger(target)) throw new Error('目标值必须为整数。');
     generated = binarySteps(values, target);
@@ -243,6 +259,12 @@ function buildRoundOptions() {
   const seen = new Set();
   for (let index = 1; index < steps.length - 1; index++) {
     const step = steps[index];
+    if (learningDemos[current.stage.source]) {
+      if (step.phase && !seen.has(step.phase)) {
+        seen.add(step.phase); options.push(new Option(step.phase, String(index)));
+      }
+      continue;
+    }
     if (step.action !== 'compare') continue;
     const round = current.stage.source === 'binary_search' ? index : step.variables.i;
     if (seen.has(round)) continue;
@@ -294,6 +316,7 @@ function positionCells(step) {
 
 function renderStep(animate) {
   const step = steps[stepIndex]; if (!step) return;
+  const demo = learningDemos[current.stage.source];
   cellAnimations.forEach(animation => animation.cancel()); cellAnimations = [];
   const stage = $('array-stage');
   const previous = cellOrder.map(cell => Number(cell.dataset.value));
@@ -318,10 +341,11 @@ function renderStep(animate) {
     cell.querySelector('.pointer-label')?.remove();
     cell.classList.toggle('compared', step.highlighted.includes(index));
     cell.classList.toggle('settled', step.settled.includes(index) && !step.highlighted.includes(index));
-    if (step.highlighted.includes(index)) cell.append(textElement('span', current.stage.source === 'binary_search' ? 'mid' : index === step.highlighted[0] ? 'j' : 'j + 1', 'pointer-label'));
-    const label = textElement('span', index, 'array-index'); label.style.setProperty('--index', index); stage.append(label);
+    if (step.highlighted.includes(index)) cell.append(textElement('span', demo ? step.pointers?.[index] || 'i' : current.stage.source === 'binary_search' ? 'mid' : index === step.highlighted[0] ? 'j' : 'j + 1', 'pointer-label'));
+    const nodeDemo = ['singly_links', 'circular_links', 'doubly_links'].includes(current.stage.source);
+    const label = textElement('span', current.stage.source === 'student_records' ? `id=${index + 1}` : nodeDemo ? `#${index + 1}` : index, 'array-index'); label.style.setProperty('--index', index); stage.append(label);
   });
-  if (step.highlighted.length === 2 && (step.action === 'swap' ||
+  if (!demo && step.highlighted.length === 2 && (step.action === 'swap' ||
     (step.action === 'compare' && step.values[step.highlighted[0]] > step.values[step.highlighted[1]]))) {
     const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     arrow.classList.add('swap-arc'); arrow.setAttribute('viewBox', '0 0 80 28');
@@ -342,7 +366,7 @@ function renderStep(animate) {
       ], { duration: 400 / (Number($('speed').value) / 100), easing: 'cubic-bezier(.4,0,.2,1)' }));
     }
   }
-  $('round-label').textContent = step.action === 'start' || step.action === 'done' ? actionNames[step.action]
+  $('round-label').textContent = demo ? step.phase : step.action === 'start' || step.action === 'done' ? actionNames[step.action]
     : `${current.stage.source === 'binary_search' ? '区间查找' : `第 ${step.variables.i + 1} 轮`} · ${actionNames[step.action]}`;
   $('step-count').textContent = `${String(stepIndex + 1).padStart(2, '0')} / ${steps.length}`;
   $('canvas-message').textContent = step.explanation;
@@ -358,31 +382,129 @@ function renderStep(animate) {
   renderOperations();
   $('mini-array').replaceChildren(...step.values.map((value, index) => textElement('span', value,
     step.highlighted.includes(index) ? 'compared' : step.settled.includes(index) ? 'settled' : '')));
-  $('action-title').textContent = actionNames[step.action] || step.action;
+  $('action-title').textContent = step.label || learningActionNames[step.action] || actionNames[step.action] || step.action;
   $('step-explanation').textContent = step.explanation;
   $('step-tip').textContent = step.action === 'swap' ? '一次相邻交换，会减少多少个逆序对？'
     : step.action === 'done' ? '试试重复值、负数或已经有序的数组。' : '为什么每一轮可以少比较一个元素？';
   $('flow-caption').textContent = current.stage.source === 'binary_search' ? '每次排除一半的候选区间' : '较大的元素逐步向右移动';
   if (current.stage.source === 'binary_search') $('step-tip').textContent = '比较中点后，哪一半区间可以排除？';
+  if (demo) {
+    $('step-tip').textContent = demo.tip;
+    $('flow-caption').textContent = demo.flow;
+    renderConceptScene(step, demo);
+  }
   $('array-state').replaceChildren(...step.values.map((value, index) => {
     const state = step.highlighted.includes(index) ? 'compared' : step.settled.includes(index) ? 'settled' : '';
     const column = textElement('div', '', `array-state-column ${state}`);
     column.append(textElement('span', `[${index}]`), textElement('b', value),
-      textElement('small', state === 'compared' ? '比较中' : state === 'settled' ? '已归位' : '待处理'));
+      textElement('small', state === 'compared' ? demo ? '操作中' : '比较中' : state === 'settled' ? demo ? '已处理' : '已归位' : '待处理'));
     return column;
   }));
   if (stepIndex === steps.length - 1) markComplete().catch(error => toast(error.message));
 }
 
+function renderConceptScene(step, demo) {
+  const container = $('concept-scene'); container.replaceChildren();
+  const body = textElement('div', '', 'scene-body');
+  const visual = textElement('div', '', 'scene-visual');
+  const source = current.stage.source;
+  const line = (label, values, empty) => {
+    const row = textElement('div', '', 'scene-line');
+    row.append(textElement('span', label, 'scene-label'));
+    if (!values.length) row.append(textElement('span', empty, 'scene-empty'));
+    values.forEach((value, i) => row.append(textElement('span', value, `scene-chip ${i === values.length - 1 ? 'active' : ''}`)));
+    visual.append(row);
+  };
+  if (source === 'linear_sum') {
+    visual.append(textElement('h4', '累计器 · 每读一个元素更新一次'));
+    const total = textElement('div', '', 'sum-card');
+    total.append(textElement('span', 'sum'), textElement('b', step.scene.sum)); visual.append(total);
+    visual.append(textElement('p', `已读取 ${step.counters[0]} / ${step.values.length} 个元素 · O(n)`, 'scene-note'));
+  } else if (['singly_links', 'circular_links', 'doubly_links'].includes(source)) {
+    const { nodes, head, current: active, order, ring, double, output } = step.scene;
+    const ref = id => id === null ? 'NULL' : `#${id}`;
+    visual.append(textElement('h4', `${double ? 'prev ← 节点 → next' : '节点 → next'} · 编号非真实地址`));
+    const consistent = !double || order.every((id, i) => nodes[id - 1].prev === (order[i - 1] ?? null));
+    const path = textElement('div', `head ${ref(head)} · ${order.map(ref).join(double && consistent ? ' ⇄ ' : ' → ')}${order.length ? ring ? ` → ${ref(head)}（回到起点）` : ' → NULL' : '（空链）'}${consistent ? '' : ' · 反向连接更新中'}`, 'link-path');
+    const cards = textElement('div', '', 'record-grid link-nodes');
+    nodes.forEach(node => {
+      const card = textElement('div', '', `record-card link-node ${node.id === active ? 'active' : ''} ${node.removed ? 'removed' : ''}`);
+      card.dataset.node = node.id;
+      card.append(textElement('small', `#${node.id}${node.removed ? ' · 已摘除' : order.includes(node.id) ? '' : ' · 未在前向链上'}`), textElement('b', node.value));
+      if (double) card.append(textElement('span', `prev: ${ref(node.prev)}`));
+      card.append(textElement('span', `next: ${ref(node.next)}`)); cards.append(card);
+    });
+    visual.append(path, cards);
+    if (output) line('出圈顺序', output, '（尚未出圈）');
+  } else if (source === 'stack_intro' || source === 'stack_operations') {
+    visual.append(textElement('h4', '栈底 → 栈顶 · 右侧为栈顶'));
+    line('当前栈', step.scene.stack, '（空栈）');
+    line('已输出', step.scene.output, '（尚未输出）');
+    if (source === 'stack_operations') visual.append(textElement('p', 'peek 只读栈顶，不改变 top；pop 才移除。', 'scene-note'));
+  } else if (source === 'queue_operations') {
+    visual.append(textElement('h4', `顺序队列 · front=${step.scene.front}, rear=${step.scene.rear} · 不循环`));
+    const slots = textElement('div', '', 'record-grid queue-slots');
+    step.values.forEach((_, i) => {
+      const valid = i >= step.scene.front && i < step.scene.rear;
+      const slot = textElement('div', '', `record-card ${valid ? 'active' : ''}`);
+      slot.append(textElement('small', `槽位 ${i}`), textElement('b', i < step.scene.rear ? step.scene.slots[i] : '—'),
+        textElement('span', valid ? '队列内' : i < step.scene.front ? '已出队' : '未使用'));
+      slots.append(slot);
+    });
+    visual.append(slots);
+    line('有效队列', step.scene.queue, '（空队列）');
+    line('已输出', step.scene.output, '（尚未输出）');
+  } else if (source === 'loop_analysis') {
+    const { n, linear, nested } = step.scene;
+    visual.append(textElement('h4', '执行次数 · 每格对应一对 (i, j)'));
+    const grid = textElement('div', '', 'loop-grid'); grid.style.setProperty('--grid-n', n);
+    for (let i = 0; i < n * n; ++i) {
+      const item = textElement('span', `${Math.floor(i / n)},${i % n}`, `loop-slot ${i < nested ? 'visited' : ''} ${nested > 0 && i === nested - 1 ? 'active' : ''}`);
+      grid.append(item);
+    }
+    visual.append(grid);
+    for (const [name, value, maximum] of [['单层 O(n)', linear, n], ['双层 O(n²)', nested, n * n]]) {
+      const row = textElement('div', '', 'count-bar');
+      const track = textElement('div', '', 'count-track');
+      const fill = textElement('span', ''); fill.style.width = `${value / maximum * 100}%`; track.append(fill);
+      row.append(textElement('span', name), track, textElement('b', `${value}/${maximum}`)); visual.append(row);
+    }
+  } else if (source === 'student_records') {
+    visual.append(textElement('h4', 'Student 记录 · 字段逻辑示意'));
+    const records = textElement('div', '', 'record-grid');
+    step.scene.records.forEach((record, i) => {
+      const card = textElement('div', '', `record-card ${i === step.scene.active ? 'active' : ''} ${record.id === step.scene.best.id ? 'best' : ''}`);
+      card.append(textElement('small', `a[${i}]${record.id === step.scene.best.id ? ' · best' : ''}`),
+        textElement('span', `id: ${record.id}`), textElement('span', `score: ${record.score}`)); records.append(card);
+    });
+    visual.append(records, textElement('p', `best = { id: ${step.scene.best.id}, score: ${step.scene.best.score} }`, 'scene-note'));
+  } else if (source === 'array_access') {
+    visual.append(textElement('h4', '地址映射 · 假设 int 占 4 字节'));
+    const addresses = textElement('div', '', 'address-grid');
+    step.scene.addresses.forEach((address, i) => {
+      const item = textElement('div', '', `address-card ${step.highlighted.includes(i) ? 'active' : ''}`);
+      item.append(textElement('small', `a[${i}]`), textElement('b', address)); addresses.append(item);
+    });
+    visual.append(addresses, textElement('p', '基址 1000 + 下标 × 4；不是实际程序地址，真实大小用 sizeof(int)。', 'scene-note'));
+  }
+  const code = textElement('div', '', 'scene-code'); code.append(textElement('h4', '当前语句 · C 思路示意'));
+  demo.code.forEach((value, i) => {
+    const row = textElement('div', '', `scene-code-line ${i === step.codeLine ? 'active' : ''}`);
+    row.append(textElement('span', i + 1), textElement('code', value)); code.append(row);
+  });
+  body.append(visual, code); container.append(body);
+}
+
 function renderOperations() {
   const elapsed = steps.slice(0, stepIndex + 1);
-  $('compare-count').textContent = elapsed.filter(step => step.action === 'compare').length;
-  $('swap-count').textContent = elapsed.filter(step => step.action === 'swap').length;
+  const demo = learningDemos[current.stage.source], currentStep = steps[stepIndex];
+  $('compare-count').textContent = demo ? currentStep.counters[0] : elapsed.filter(step => step.action === 'compare').length;
+  $('swap-count').textContent = demo ? currentStep.counters[1] : elapsed.filter(step => step.action === 'swap').length;
   const first = Math.max(0, stepIndex - 1), last = Math.min(steps.length, first + 5);
   $('operation-list').replaceChildren(...steps.slice(first, last).map((step, offset) => {
     const index = first + offset;
-    const label = step.action === 'compare'
-      ? step.highlighted.map(value => `a[${value}]`).join(' 与 ') : actionNames[step.action] || step.action;
+    const label = step.label || (step.action === 'compare'
+      ? step.highlighted.map(value => `a[${value}]`).join(' 与 ') : learningActionNames[step.action] || actionNames[step.action] || step.action);
     const row = textElement('button', '', `operation-row ${index === stepIndex ? 'current' : index > stepIndex ? 'pending' : ''}`);
     row.dataset.step = index;
     row.title = step.explanation;
@@ -551,7 +673,7 @@ function attachEvents() {
     const link = event.target.closest('a');
     if (!link) return;
     event.preventDefault();
-    if (/^https:\/\/www\.luogu\.com\.cn\/problem\/P[1-9]\d*$/.test(link.href)) guard(() => api.openSource({ url: link.href }))();
+    if (/^https:\/\/www\.luogu\.com\.cn\/problem\/[PB][1-9]\d*$/.test(link.href)) guard(() => api.openSource({ url: link.href }))();
   });
   api.onEvent(guard(async message => {
     if (message.event === 'log' && current?.stage.id !== 'exam') log(message.payload);

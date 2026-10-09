@@ -1,0 +1,24 @@
+{
+  "id": "linear.stack.practice",
+  "title": "实现栈的三个操作",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "样例：基础用例",
+      "input": "7\n1 3\n1 5\n3\n2\n1 7\n2\n3\n",
+      "expected": "5\n5\n7\n3\n",
+      "sample": true
+    },
+    {
+      "name": "普通用例 2",
+      "input": "8\n1 2\n1 4\n1 6\n2\n3\n2\n1 8\n3\n",
+      "expected": "6\n4\n4\n8\n"
+    },
+    {
+      "name": "普通用例 3",
+      "input": "6\n1 7\n1 3\n2\n1 5\n3\n2\n",
+      "expected": "3\n5\n5\n"
+    }
+  ]
+}
+

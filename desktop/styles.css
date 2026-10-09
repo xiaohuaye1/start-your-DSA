@@ -105,6 +105,43 @@ h1, h2, h3, p { margin: 0 }
 .array-cell { position: absolute; top: 64px; height: 58px; width: calc(var(--slot) - 8px); left: calc(var(--index) * var(--slot) + 4px); display: grid; place-items: center; border: 1px solid #525252; background: #292929; border-radius: 4px; color: #eee; font-family: var(--mono); font-size: 24px; will-change: transform; transition: background .2s, border-color .2s }
 .array-cell.compared { border-color: var(--amber); background: #3c3323; color: #f4e5c8 }
 .array-cell.settled { border-color: #668f6d; background: #28392d; color: #b3d4b9 }
+.learning-mode { padding-top: 10px; padding-bottom: 10px }
+.learning-mode #canvas-message { margin-top: 8px; font-size: 13px }
+.learning-mode .array-scroll { flex: 0 0 125px; min-height: 125px }
+.learning-mode #array-stage { height: 118px }
+.learning-mode .array-cell { top: 36px; height: 49px; font-size: 20px }
+.learning-mode .pointer-label { top: -29px; font-size: 10px }
+.learning-mode .pointer-label:after { line-height: 11px; margin-top: 0 }
+.learning-mode .array-index { top: 94px; font-size: 10px }
+.concept-scene { flex: 1; min-height: 60px; width: 100%; max-width: 850px; margin: 5px auto; overflow: auto }
+.scene-body { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; min-height: 120px }
+.scene-visual, .scene-code { min-width: 0; padding: 12px; border: 1px solid #3b3b3b; background: #222; border-radius: 4px }
+.scene-body h4 { margin: 0 0 10px; color: #bdbdbd; font-size: 11px; font-weight: 400; line-height: 1.6 }
+.scene-note { color: #aaa; font-size: 10px; margin-top: 9px; line-height: 1.8; overflow-wrap: anywhere }
+.scene-line { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 10px 0; min-height: 25px }
+.scene-label { color: #aaa; font-size: 10px; width: 44px; flex-shrink: 0 }.scene-empty { color: #777; font-size: 11px }
+.scene-chip { min-width: 25px; padding: 4px 6px; text-align: center; border: 1px solid #4b4b4b; border-radius: 3px; font: 12px var(--mono); background: #2a2a2a }
+.scene-chip.active { border-color: var(--amber); color: #edcd95; background: #393224 }
+.scene-chip.active, .record-card.active, .sum-card b, .loop-slot.active { animation: lesson-update .24s ease-out }
+@keyframes lesson-update { from { opacity: .55; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
+.sum-card { display: flex; align-items: center; gap: 20px; background: #2b2b2b; border: 1px solid #5f523b; padding: 12px; border-radius: 4px; font-family: var(--mono) }
+.sum-card span { color: #aaa; font-size: 12px }.sum-card b { margin-left: auto; color: var(--amber); font-size: 21px; font-weight: 400 }
+.scene-code-line { display: flex; gap: 8px; padding: 4px 5px; border-left: 2px solid transparent; font: 11px var(--mono); line-height: 1.6 }
+.scene-code-line > span { width: 12px; flex-shrink: 0; color: #777 }.scene-code-line code { white-space: pre-wrap; overflow-wrap: anywhere }
+.scene-code-line.active { background: #393225; border-left-color: var(--amber); color: #ecd4ac }
+.loop-grid { display: grid; grid-template-columns: repeat(var(--grid-n), minmax(0, 1fr)); gap: 3px }
+.loop-slot { padding: 3px 0; text-align: center; font: 9px var(--mono); color: #777; background: #2c2c2c; border: 1px solid #404040; border-radius: 2px }
+.loop-slot.visited { color: #b9d4bd; background: #293c2e; border-color: #56745d }.loop-slot.active { color: #ebc589; border-color: var(--amber); background: #3b3325 }
+.count-bar { display: flex; align-items: center; gap: 6px; font-size: 9px; margin-top: 8px }.count-bar > span { width: 64px; flex-shrink: 0 }.count-bar b { font: 10px var(--mono); width: 32px }
+.count-track { flex: 1; height: 4px; background: #3e3e3e; border-radius: 2px; overflow: hidden }.count-track span { display: block; height: 100%; background: var(--amber); transition: width .15s }
+.record-grid, .address-grid { display: flex; flex-wrap: wrap; gap: 6px }
+.link-path { color: #d4c5a9; font: 11px/1.8 var(--mono); overflow-wrap: anywhere; margin-bottom: 8px }
+.link-node.removed { opacity: .45; border-style: dashed; text-decoration: line-through }
+.link-node b, .queue-slots b { font-size: 14px; font-weight: 400 }
+.link-nodes .record-card { min-width: 80px }
+.record-card { display: flex; flex-direction: column; gap: 4px; padding: 7px; border: 1px solid #4a4a4a; border-radius: 3px; background: #292929; font: 11px var(--mono) }
+.record-card small, .address-card small { font-size: 9px; color: #aaa }.record-card.best { border-color: #739a79 }.record-card.active, .address-card.active { background: #393224; border-color: var(--amber) }
+.address-card { border: 1px solid #444; padding: 7px; display: flex; flex-direction: column; gap: 5px; border-radius: 3px; font: 11px var(--mono) }.address-card b { font-weight: 400 }
 .array-index { position: absolute; top: 136px; left: calc(var(--index) * var(--slot)); width: var(--slot); text-align: center; color: #aaa; font-family: var(--mono); font-size: 11px }
 .pointer-label { position: absolute; top: -45px; font-family: var(--mono); font-size: 12px; color: var(--amber); white-space: nowrap }
 .pointer-label:after { content: '↓'; display: block; line-height: 14px; font-size: 15px; text-align: center; margin-top: 2px }

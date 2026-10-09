@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 class Settings:
-    DEFAULTS = {"gcc": "", "g++": "", "speed": 100, "last_lesson": "sorting.bubble_sort", "last_stage": "animation"}
+    DEFAULTS = {"gcc": "", "g++": "", "speed": 100, "last_lesson": "intro.algorithm_complexity", "last_stage": "animation"}
 
     def __init__(self, directory: Path):
         self.path = directory / "settings.json"

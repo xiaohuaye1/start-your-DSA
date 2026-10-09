@@ -1,0 +1,28 @@
+{
+  "id": "intro.data_structures.P1427",
+  "title": "洛谷 P1427 · 小鱼的数字游戏",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "Local sample",
+      "file": "cases/1",
+      "sample": true
+    },
+    {
+      "name": "Practice 2",
+      "file": "cases/2"
+    },
+    {
+      "name": "Practice 3",
+      "file": "cases/3"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P1427",
+    "url": "https://www.luogu.com.cn/problem/P1427",
+    "checked_on": "2026-10-09",
+    "statement": "题意转述；本地样例与测试由本项目生成"
+  }
+}
+

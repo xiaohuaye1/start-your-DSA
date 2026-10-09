@@ -1,0 +1,21 @@
+{
+  "id": "linear.arrays.practice",
+  "title": "修改指定下标的元素",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "样例：基础用例",
+      "file": "cases/1",
+      "sample": true
+    },
+    {
+      "name": "普通用例 2",
+      "file": "cases/2"
+    },
+    {
+      "name": "普通用例 3",
+      "file": "cases/3"
+    }
+  ]
+}
+

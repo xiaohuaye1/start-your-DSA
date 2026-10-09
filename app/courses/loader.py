@@ -37,9 +37,14 @@ class CourseLoader:
         data = self._json(directory / "problem.json")
         cases = []
         for entry in data["cases"]:
-            case = self._safe(directory, entry["file"])
-            input_text = case.with_suffix(".in").read_text(encoding="utf-8")
-            expected = case.with_suffix(".out").read_text(encoding="utf-8")
+            if "file" in entry:
+                case = self._safe(directory, entry["file"])
+                input_text = case.with_suffix(".in").read_text(encoding="utf-8")
+                expected = case.with_suffix(".out").read_text(encoding="utf-8")
+            else:
+                input_text, expected = entry["input"], entry["expected"]
+                if not isinstance(input_text, str) or not isinstance(expected, str):
+                    raise ValueError("内嵌用例的输入输出必须为文本")
             cases.append(TestCase(entry["name"], input_text, expected, entry.get("sample", False)))
         return Problem(data["id"], data["title"],
                        (directory / "statement.md").read_text(encoding="utf-8"),

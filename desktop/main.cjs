@@ -33,7 +33,7 @@ app.whenReady().then(async () => {
     });
     ipcMain.handle('dsa:open-source', async (event, params) => {
       checkSender(event);
-      if (typeof params?.url !== 'string' || !/^https:\/\/www\.luogu\.com\.cn\/problem\/P[1-9]\d*$/.test(params.url))
+      if (typeof params?.url !== 'string' || !/^https:\/\/www\.luogu\.com\.cn\/problem\/[PB][1-9]\d*$/.test(params.url))
         throw new Error('仅支持打开洛谷原题链接');
       await shell.openExternal(params.url);
     });

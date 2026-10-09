@@ -1,0 +1,31 @@
+{
+  "id": "linear.doubly_list.P1160",
+  "title": "洛谷 P1160 · 队列安排",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "Local sample",
+      "input": "4\n1 1\n1 0\n2 0\n1\n2\n",
+      "expected": "3 1 4\n",
+      "sample": true
+    },
+    {
+      "name": "Practice 2",
+      "input": "5\n1 0\n2 1\n1 1\n3 0\n2\n3\n3\n",
+      "expected": "2 5 1 4\n"
+    },
+    {
+      "name": "Practice 3",
+      "input": "6\n1 1\n2 1\n2 0\n3 1\n4 0\n2\n4\n1\n",
+      "expected": "6 2 3 5\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P1160",
+    "url": "https://www.luogu.com.cn/problem/P1160",
+    "checked_on": "2026-10-09",
+    "statement": "题意转述；本地样例与测试由本项目生成"
+  }
+}
+

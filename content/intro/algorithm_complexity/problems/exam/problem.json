@@ -1,0 +1,28 @@
+{
+  "id": "intro.algorithm_complexity.P1001",
+  "title": "洛谷 P1001 · A+B Problem",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "Local sample",
+      "file": "cases/1",
+      "sample": true
+    },
+    {
+      "name": "Practice 2",
+      "file": "cases/2"
+    },
+    {
+      "name": "Practice 3",
+      "file": "cases/3"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P1001",
+    "url": "https://www.luogu.com.cn/problem/P1001",
+    "checked_on": "2026-10-09",
+    "statement": "题意转述；本地样例与测试由本项目生成"
+  }
+}
+

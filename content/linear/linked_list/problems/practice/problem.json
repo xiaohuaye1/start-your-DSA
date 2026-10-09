@@ -1,0 +1,24 @@
+{
+  "id": "linear.linked_list.practice",
+  "title": "单链表插入节点",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "样例：基础用例",
+      "input": "4 2 9\n3 1 4 2\n",
+      "expected": "3 1 9 4 2\n",
+      "sample": true
+    },
+    {
+      "name": "普通用例 2",
+      "input": "5 3 7\n2 5 3 6 4\n",
+      "expected": "2 5 3 7 6 4\n"
+    },
+    {
+      "name": "普通用例 3",
+      "input": "4 1 8\n4 2 6 3\n",
+      "expected": "4 8 2 6 3\n"
+    }
+  ]
+}
+

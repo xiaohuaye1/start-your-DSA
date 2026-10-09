@@ -70,6 +70,33 @@ class JudgeTests(unittest.TestCase):
             self.assertEqual(result.verdict, "AC", result.message)
             self.assertEqual(len(result.cases), len(problem.cases))
 
+    def test_all_added_references_c_and_cpp(self):
+        languages = ["C", "C++"] if shutil.which("g++") else ["C"]
+        for lesson in self.loader.lessons.values():
+            if lesson.id == "sorting.bubble_sort":
+                continue
+            for stage in lesson.stages:
+                if stage.kind != "practice":
+                    continue
+                problem = self.loader.problem(lesson, stage.source)
+                reference = self.loader.text(lesson, stage.source + "/reference.c")
+                for language in languages:
+                    with self.subTest(lesson=lesson.id, stage=stage.id, language=language):
+                        result = self.judge(reference, problem.cases, language)
+                        self.assertEqual(result.verdict, "AC", result.message)
+                        self.assertEqual(len(result.cases), 3)
+
+    def test_all_added_templates_compile(self):
+        for lesson in self.loader.lessons.values():
+            if lesson.id == "sorting.bubble_sort":
+                continue
+            for stage in lesson.stages:
+                if stage.kind == "practice":
+                    problem = self.loader.problem(lesson, stage.source)
+                    with self.subTest(lesson=lesson.id, stage=stage.id):
+                        result = self.judge(problem.starter, [TestCase("template", problem.cases[0].input, None)])
+                        self.assertEqual(result.verdict, "RUN", result.message)
+
     @unittest.skipUnless(shutil.which("g++"), "需要 G++")
     def test_cpp(self):
         code = '#include <iostream>\nint main(){int n;std::cin>>n;std::cout<<n*2;}'

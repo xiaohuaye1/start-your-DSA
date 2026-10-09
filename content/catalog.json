@@ -1,6 +1,8 @@
 {
   "version": 1,
   "chapters": [
+    {"id": "intro", "title": "入门篇", "lessons": ["intro/algorithm_complexity", "intro/data_structures", "intro/algorithm_analysis", "intro/struct_review"]},
+    {"id": "linear", "title": "线性结构", "lessons": ["linear/arrays", "linear/linked_list", "linear/circular_list", "linear/doubly_list", "linear/stack", "linear/queue"]},
     {"id": "sorting", "title": "01 查找与排序", "lessons": ["sorting/bubble_sort"]}
   ]
 }

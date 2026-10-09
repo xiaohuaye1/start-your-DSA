@@ -1,0 +1,31 @@
+{
+  "id": "linear.stack.P1739",
+  "title": "洛谷 P1739 · 表达式括号匹配",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "Local sample",
+      "input": "(a+b)*(c-d)@\n",
+      "expected": "YES\n",
+      "sample": true
+    },
+    {
+      "name": "Practice 2",
+      "input": "a+(b*c@\n",
+      "expected": "NO\n"
+    },
+    {
+      "name": "Practice 3",
+      "input": "a+b)*(c-d@\n",
+      "expected": "NO\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P1739",
+    "url": "https://www.luogu.com.cn/problem/P1739",
+    "checked_on": "2026-10-09",
+    "statement": "题意转述；本地样例与测试由本项目生成"
+  }
+}
+
