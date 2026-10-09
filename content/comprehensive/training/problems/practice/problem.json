@@ -1,0 +1,23 @@
+{
+  "id": "comprehensive.training.practice",
+  "title": "组合优先队列与最优合并",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "5\n4 2 5 1 3\n",
+      "expected": "33\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "4\n2 2 3 3\n",
+      "expected": "20\n"
+    },
+    {
+      "name": "case-3",
+      "input": "1\n7\n",
+      "expected": "0\n"
+    }
+  ]
+}

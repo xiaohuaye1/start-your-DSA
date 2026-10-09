@@ -1,0 +1,31 @@
+{
+  "id": "sorting.insertion_sort.P1152",
+  "title": "洛谷 P1152 · 欢乐的跳",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "4\n1 4 2 3\n",
+      "expected": "Jolly\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "4\n1 3 5 2\n",
+      "expected": "Not jolly\n"
+    },
+    {
+      "name": "case-3",
+      "input": "5\n-2 2 -1 1 0\n",
+      "expected": "Jolly\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P1152",
+    "url": "https://www.luogu.com.cn/problem/P1152",
+    "checked_on": "2026-10-09",
+    "note": "题意转述；本地样例、测试与参考代码由本项目编写。本地 AC 不等于官方 AC。"
+  }
+}
+

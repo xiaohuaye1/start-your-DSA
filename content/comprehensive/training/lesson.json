@@ -1,0 +1,24 @@
+{
+  "id": "comprehensive.training",
+  "title": "数据结构综合训练",
+  "stages": [
+    {
+      "id": "animation",
+      "title": "动画演示",
+      "kind": "animation",
+      "source": "optimal_merge"
+    },
+    {
+      "id": "practice",
+      "title": "实操训练",
+      "kind": "practice",
+      "source": "problems/practice"
+    },
+    {
+      "id": "exam",
+      "title": "真题演练",
+      "kind": "practice",
+      "source": "problems/exam"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "trees.heap.practice",
+  "title": "补全小根堆优先队列",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "8\n1 4\n1 2\n2\n1 3\n3\n2\n3\n2\n",
+      "expected": "2\n3\n4\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "7\n1 3\n1 1\n1 1\n2\n3\n2\n3\n",
+      "expected": "1\n1\n"
+    },
+    {
+      "name": "case-3",
+      "input": "8\n1 5\n1 2\n1 4\n2\n3\n1 3\n2\n3\n",
+      "expected": "2\n3\n"
+    }
+  ]
+}
+

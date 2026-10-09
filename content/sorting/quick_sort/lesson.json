@@ -1,0 +1,25 @@
+{
+  "id": "sorting.quick_sort",
+  "title": "快速排序",
+  "stages": [
+    {
+      "id": "animation",
+      "title": "动画演示",
+      "kind": "animation",
+      "source": "quick_sort"
+    },
+    {
+      "id": "practice",
+      "title": "实操训练",
+      "kind": "practice",
+      "source": "problems/practice"
+    },
+    {
+      "id": "exam",
+      "title": "真题演练",
+      "kind": "practice",
+      "source": "problems/exam"
+    }
+  ]
+}
+

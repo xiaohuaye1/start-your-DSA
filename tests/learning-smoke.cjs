@@ -39,8 +39,8 @@ async function main() {
     await page.locator('#connection-label').filter({ hasText: '本地判题已连接' }).waitFor();
     await page.waitForFunction(() => document.getElementById('array-canvas').dataset.demo === 'linear_sum');
     assert.equal(await page.locator('.lesson-link').count(), 28);
-    assert.equal(await page.locator('.lesson-link:not([disabled])').count(), 11);
-    assert.equal(await page.locator('#progress-count').innerText(), '0 / 33');
+    assert.equal(await page.locator('.lesson-link:not([disabled])').count(), 28);
+    assert.equal(await page.locator('#progress-count').innerText(), '0 / 84');
     await fs.mkdir(path.join(root, 'test-results'), { recursive: true });
     for (let index = 0; index < lessons.length; ++index) {
       const [lesson, title, source, problem] = lessons[index];
@@ -57,7 +57,7 @@ async function main() {
       await page.locator('#next').click();
       await capture(app, root, `lesson-${source}.png`);
       await page.locator('#timeline').evaluate(element => { element.value = element.max; element.dispatchEvent(new Event('input')); });
-      await page.waitForFunction(expected => document.getElementById('progress-count').textContent === expected, `${index * 3 + 1} / 33`);
+      await page.waitForFunction(expected => document.getElementById('progress-count').textContent === expected, `${index * 3 + 1} / 84`);
       await page.locator('[data-panel="mindmap"]').click();
       assert.match(await page.locator('#knowledge-tree').innerText(), new RegExp(title));
       if (source !== 'linear_sum') assert.doesNotMatch(await page.locator('#knowledge-tree').innerText(), /一般 \/ 最坏 O\(n²\)/);
@@ -80,9 +80,9 @@ async function main() {
         await page.locator('#run').click();
         await page.locator('#judge-status').filter({ hasText: /^AC$/ }).waitFor({ timeout: 20000 });
         const beforeSubmit = index * 3 + (stage === 'practice' ? 1 : 2);
-        assert.equal(await page.locator('#progress-count').innerText(), `${beforeSubmit} / 33`);
+        assert.equal(await page.locator('#progress-count').innerText(), `${beforeSubmit} / 84`);
         await page.locator('#submit').click();
-        await page.waitForFunction(expected => document.getElementById('progress-count').textContent === expected, `${beforeSubmit + 1} / 33`);
+        await page.waitForFunction(expected => document.getElementById('progress-count').textContent === expected, `${beforeSubmit + 1} / 84`);
         assert.equal(await page.locator('.case-item').count(), 3);
         if (stage === 'exam') assert.doesNotMatch(await page.locator('#output').innerText(), /[\u4e00-\u9fff]/);
       }
@@ -107,7 +107,7 @@ async function main() {
     await page.locator('#toast').filter({ hasText: '1～8' }).waitFor();
     assert.equal(await page.locator('.array-cell').count(), 8);
     assert.deepEqual(errors, []);
-    console.log('前五节实际界面全部通过：播放快照、回退、独立笔记与草稿、原题入口、33环节进度、小窗口、原始输出。');
+    console.log('前五节实际界面全部通过：播放快照、回退、独立笔记与草稿、原题入口、84环节进度、小窗口、原始输出。');
   } catch (error) {
     if (page) console.error(await page.evaluate(() => ({ title: document.getElementById('lesson-title').textContent,
       filename: document.getElementById('filename').textContent, status: document.getElementById('judge-status').textContent,

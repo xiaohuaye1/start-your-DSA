@@ -1,0 +1,30 @@
+{
+  "id": "comprehensive.training.P1090",
+  "title": "洛谷 P1090 · 合并果子",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "4\n1 2 3 4\n",
+      "expected": "19\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "5\n2 3 4 5 6\n",
+      "expected": "45\n"
+    },
+    {
+      "name": "case-3",
+      "input": "3\n2 2 2\n",
+      "expected": "10\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P1090",
+    "url": "https://www.luogu.com.cn/problem/P1090",
+    "checked_on": "2026-10-09",
+    "note": "题意转述；自编参考代码与3个轻量用例。本地 AC 不等于官方 AC。"
+  }
+}

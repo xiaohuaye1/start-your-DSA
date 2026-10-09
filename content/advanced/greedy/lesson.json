@@ -1,0 +1,24 @@
+{
+  "id": "advanced.greedy",
+  "title": "贪心算法",
+  "stages": [
+    {
+      "id": "animation",
+      "title": "动画演示",
+      "kind": "animation",
+      "source": "greedy_intervals"
+    },
+    {
+      "id": "practice",
+      "title": "实操训练",
+      "kind": "practice",
+      "source": "problems/practice"
+    },
+    {
+      "id": "exam",
+      "title": "真题演练",
+      "kind": "practice",
+      "source": "problems/exam"
+    }
+  ]
+}

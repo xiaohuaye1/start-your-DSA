@@ -2,7 +2,11 @@
   "version": 1,
   "chapters": [
     {"id": "intro", "title": "入门篇", "lessons": ["intro/algorithm_complexity", "intro/data_structures", "intro/algorithm_analysis", "intro/struct_review"]},
-    {"id": "linear", "title": "线性结构", "lessons": ["linear/arrays", "linear/linked_list", "linear/circular_list", "linear/doubly_list", "linear/stack", "linear/queue"]},
-    {"id": "sorting", "title": "01 查找与排序", "lessons": ["sorting/bubble_sort"]}
+    {"id": "linear", "title": "线性结构", "lessons": ["linear/arrays", "linear/linked_list", "linear/circular_list", "linear/doubly_list", "linear/stack", "linear/queue", "linear/circular_queue"]},
+    {"id": "sorting", "title": "01 查找与排序", "lessons": ["sorting/overview", "sorting/bubble_sort", "sorting/selection_sort", "sorting/insertion_sort", "sorting/quick_sort", "sorting/merge_sort", "sorting/heap_sort", "sorting/binary_search"]},
+    {"id": "trees", "title": "树", "lessons": ["trees/binary_tree", "trees/avl_tree", "trees/heap"]},
+    {"id": "graphs", "title": "图", "lessons": ["graphs/basics", "graphs/traversal"]},
+    {"id": "advanced", "title": "高级专题", "lessons": ["advanced/hash_table", "advanced/greedy", "advanced/dynamic_programming"]},
+    {"id": "comprehensive", "title": "综合练习", "lessons": ["comprehensive/training"]}
   ]
 }

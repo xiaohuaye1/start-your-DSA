@@ -1,0 +1,31 @@
+{
+  "id": "graphs.traversal.P5318",
+  "title": "洛谷 P5318 · 查找文献",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "4 4\n1 2\n1 3\n2 4\n3 4\n",
+      "expected": "1 2 4 3\n1 2 3 4\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "5 4\n1 2\n2 3\n3 1\n4 5\n",
+      "expected": "1 2 3\n1 2 3\n"
+    },
+    {
+      "name": "case-3",
+      "input": "5 5\n1 3\n1 2\n2 4\n3 4\n4 5\n",
+      "expected": "1 2 4 5 3\n1 2 3 4 5\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P5318",
+    "url": "https://www.luogu.com.cn/problem/P5318",
+    "checked_on": "2026-10-09",
+    "note": "题意转述；自编参考代码与3个轻量用例。本地 AC 不等于官方 AC。"
+  }
+}
+

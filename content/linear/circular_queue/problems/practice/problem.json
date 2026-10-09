@@ -1,0 +1,24 @@
+{
+  "id": "linear.circular_queue.practice",
+  "title": "循环队列操作命令",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "3 8\n1 4\n1 2\n1 7\n1 9\n2\n1 5\n3\n2\n",
+      "expected": "FULL\n4\n2\n2\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "2 7\n1 3\n1 6\n2\n2\n2\n1 8\n3\n",
+      "expected": "3\n6\nEMPTY\n8\n"
+    },
+    {
+      "name": "case-3",
+      "input": "3 8\n1 5\n1 1\n2\n1 4\n1 2\n2\n2\n3\n",
+      "expected": "5\n1\n4\n2\n"
+    }
+  ]
+}
+

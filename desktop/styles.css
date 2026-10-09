@@ -114,7 +114,28 @@ h1, h2, h3, p { margin: 0 }
 .learning-mode .pointer-label:after { line-height: 11px; margin-top: 0 }
 .learning-mode .array-index { top: 94px; font-size: 10px }
 .concept-scene { flex: 1; min-height: 60px; width: 100%; max-width: 850px; margin: 5px auto; overflow: auto }
+.structure-diagram { display: block; width: 100%; height: auto; max-height: 240px; min-height: 140px; font: 13px var(--mono); fill: #ddd; stroke: none }
+.structure-edge { stroke: #858585; stroke-width: 1.4 }
+.structure-node rect { fill: #292929; stroke: #656565 }
+.structure-node.seen rect { fill: #293b2d; stroke: #64856b }
+.structure-node.active rect { fill: #423720; stroke: var(--amber) }
+.structure-node .node-id { font-size: 10px; fill: #aaa }
+.adjacency-matrix { display: grid; grid-template-columns: repeat(var(--matrix-n), minmax(20px, 1fr)); gap: 2px; max-width: 340px; margin: 8px auto; font: 10px var(--mono); text-align: center }
+.adjacency-matrix span { background: #2b2b2b; padding: 3px }
+.adjacency-matrix .matrix-label { color: var(--amber); background: transparent }
 .scene-body { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; min-height: 120px }
+.hash-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(62px,1fr)); gap: 5px }
+.hash-slot b { font-size: 12px; font-weight: 400 }.hash-slot.deleted { border-style: dashed; color: #c1a270 }
+.interval-row { display: flex; align-items: center; gap: 8px; margin: 9px 0; padding: 4px; border-left: 2px solid transparent; font: 10px var(--mono) }
+.interval-row > span { width: 103px; flex-shrink: 0 }.interval-row > small { width: 25px; font-size: 9px }
+.interval-track { flex: 1; position: relative; height: 12px; overflow: hidden; background: #292929 }
+.interval-track span { position: absolute; height: 100%; min-width: 2px; background: #777; border-radius: 2px }
+.interval-row.chosen .interval-track span { background: #64856b }.interval-row.rejected { opacity: .55 }
+.interval-row.active { border-color: var(--amber); background: #393224 }.interval-row.active .interval-track span { background: var(--amber) }
+.dp-board { display: grid; grid-template-columns: 48px repeat(7,minmax(0,1fr)); gap: 3px; overflow: auto; font: 10px var(--mono) }
+.dp-board span { padding: 5px 2px; text-align: center; background: #2c2c2c; border: 1px solid #414141; overflow-wrap: anywhere }
+.dp-board .dp-caption { color: #aaa; font-size: 9px }.dp-board .active { background: #393224; border-color: var(--amber) }
+.dp-board .source { border-color: #64856b; color: #b3d4b9 }.merge-record { margin: 7px 0; font: 11px var(--mono); color: #cfc3ad }
 .scene-visual, .scene-code { min-width: 0; padding: 12px; border: 1px solid #3b3b3b; background: #222; border-radius: 4px }
 .scene-body h4 { margin: 0 0 10px; color: #bdbdbd; font-size: 11px; font-weight: 400; line-height: 1.6 }
 .scene-note { color: #aaa; font-size: 10px; margin-top: 9px; line-height: 1.8; overflow-wrap: anywhere }
@@ -135,6 +156,14 @@ h1, h2, h3, p { margin: 0 }
 .count-bar { display: flex; align-items: center; gap: 6px; font-size: 9px; margin-top: 8px }.count-bar > span { width: 64px; flex-shrink: 0 }.count-bar b { font: 10px var(--mono); width: 32px }
 .count-track { flex: 1; height: 4px; background: #3e3e3e; border-radius: 2px; overflow: hidden }.count-track span { display: block; height: 100%; background: var(--amber); transition: width .15s }
 .record-grid, .address-grid { display: flex; flex-wrap: wrap; gap: 6px }
+.array-cell.array-hole { border-style: dashed; background: #212121; color: #9d8a68 }
+.ring-board { width: 180px; height: 170px; position: relative; margin: 4px auto 8px }
+.ring-board:before { content: ''; position: absolute; inset: 22px; border: 1px dashed #606060; border-radius: 50% }
+.ring-direction { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); color: var(--amber); font-size: 22px }
+.ring-slot { position: absolute; transform: translate(-50%,-50%); width: 65px; min-height: 55px; align-items: center; z-index: 1 }
+.ring-slot.active { animation: none }.ring-slot.inactive { border-style: dashed; color: #999 }
+.ring-slot b, .partition-slots b { font-size: 14px; font-weight: 400 }
+.ring-slot small { white-space: nowrap }
 .link-path { color: #d4c5a9; font: 11px/1.8 var(--mono); overflow-wrap: anywhere; margin-bottom: 8px }
 .link-node.removed { opacity: .45; border-style: dashed; text-decoration: line-through }
 .link-node b, .queue-slots b { font-size: 14px; font-weight: 400 }
@@ -293,6 +322,11 @@ dialog > label { display: block; font-size: 11px; color: #bbb; margin-bottom: 16
   .statusbar .shortcuts { display: none }.status-language { margin-left: auto }
 }
 @media (max-height: 820px) {
+  /* Tree/graph values remain in nodes and the auxiliary panel; reserve space for connections. */
+  .learning-mode:has(.structure-diagram) .array-scroll { display: none }
+  .learning-mode:is([data-demo="hash_table"],[data-demo="greedy_intervals"],[data-demo="knapsack_01"]) .array-scroll { display: none }
+  .hash-grid .record-card { padding: 4px; gap: 2px }.hash-slot small { font-size: 8px; line-height: 1.25 }.hash-slot b { line-height: 1.2 }
+  .interval-row { margin: 3px 0; padding: 1px; font-size: 9px; line-height: 1.25 }
   .auxiliary { height: 164px }.output-panel { height: 175px }
   .array-canvas { padding-top: 8px; padding-bottom: 10px }#canvas-message { margin-top: 8px; font-size: 13px }
   .array-scroll { min-height: 155px }.playback { min-height: 57px; padding-top: 9px; padding-bottom: 9px }

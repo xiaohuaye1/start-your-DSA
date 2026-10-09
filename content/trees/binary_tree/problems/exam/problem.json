@@ -1,0 +1,31 @@
+{
+  "id": "trees.binary_tree.P1305",
+  "title": "洛谷 P1305 · 新二叉树",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "5\nabc\nbde\nc**\nd**\ne**\n",
+      "expected": "abdec\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "4\nab*\nbcd\nc**\nd**\n",
+      "expected": "abcd\n"
+    },
+    {
+      "name": "case-3",
+      "input": "6\nabc\nb*d\ncef\nd**\ne**\nf**\n",
+      "expected": "abdcef\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P1305",
+    "url": "https://www.luogu.com.cn/problem/P1305",
+    "checked_on": "2026-10-09",
+    "note": "题意转述；自编参考代码与3个轻量用例。本地 AC 不等于官方 AC。"
+  }
+}
+

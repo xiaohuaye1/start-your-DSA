@@ -1,0 +1,31 @@
+{
+  "id": "sorting.binary_search.P2249",
+  "title": "洛谷 P2249 · 查找",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "5 3\n1 2 2 4 6\n2 3 6\n",
+      "expected": "2 -1 5\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "6 3\n1 1 3 5 5 7\n1 5 4\n",
+      "expected": "1 4 -1\n"
+    },
+    {
+      "name": "case-3",
+      "input": "4 2\n2 4 6 8\n4 7\n",
+      "expected": "2 -1\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P2249",
+    "url": "https://www.luogu.com.cn/problem/P2249",
+    "checked_on": "2026-10-09",
+    "note": "题意转述；自编参考代码与3个轻量用例。本地 AC 不等于官方 AC。"
+  }
+}
+

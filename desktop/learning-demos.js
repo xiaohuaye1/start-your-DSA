@@ -1,5 +1,8 @@
 import { parseArray } from './algorithms.js';
 import { linearDemos } from './linear-demos.js';
+import { sortingDemos } from './sorting-demos.js';
+import { advancedDemos } from './advanced-demos.js';
+import { finalDemos } from './final-demos.js';
 
 // Each frame owns its data, so seeking backwards restores a complete snapshot.
 function frames(input) {
@@ -148,6 +151,9 @@ export function arraySteps(input) {
 }
 
 export const learningDemos = {
+  ...finalDemos,
+  ...advancedDemos,
+  ...sortingDemos,
   ...linearDemos,
   linear_sum: { lesson: 'intro.algorithm_complexity', inputLabel: '输入数组', defaults: [3, 1, 4, 2], generate: sumSteps,
     counters: ['读取', '累加'], flow: '逐个读取，每次更新累计总和', tip: '长度翻倍时，访问次数怎样变化？',
@@ -181,6 +187,7 @@ export function learningSteps(source, input) {
     throw new Error('这些演示只接受 1～8 个小整数。');
   if (source === 'student_records' && input.some(value => value < 0 || value > 100))
     throw new Error('学生成绩范围为 0～100。');
+  if (demo.positiveOnly && input.some(value => value <= 0)) throw new Error('本课数据须为正整数。');
   return demo.generate(input);
 }
 
@@ -190,5 +197,6 @@ export function parseLearningInput(source, text) {
   if (!learningDemos[source] || values.length > 8) throw new Error('请输入 1～8 个整数。');
   if (source === 'student_records' && values.some(value => value < 0 || value > 100))
     throw new Error('学生成绩范围为 0～100。');
+  if (learningDemos[source].positiveOnly && values.some(value => value <= 0)) throw new Error('本课数据须为正整数。');
   return values;
 }

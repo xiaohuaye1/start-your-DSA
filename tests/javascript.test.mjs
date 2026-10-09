@@ -116,11 +116,64 @@ test('全部教学演示：独立动画快照、计数、边界与输入检查',
         assert.equal(last.variables.front, values.length);
         assert.equal(last.variables.rear, values.length);
         steps.forEach(step => assert.deepEqual(step.scene.queue, step.scene.slots.slice(step.variables.front, step.variables.rear)));
+      } else if (source === 'ring_queue') {
+        assert.deepEqual(last.scene.output, values);
+        assert.equal(last.variables.count, 0);
+        assert.equal(last.variables.front, last.variables.rear);
+        for (const [i, step] of steps.entries()) {
+          const { slots, capacity, front, rear, count } = step.scene;
+          assert.ok(count >= 0 && count <= capacity);
+          assert.equal(rear, (front+count)%capacity);
+          assert.deepEqual(step.scene.queue, Array.from({length:count},(_,j)=>slots[(front+j)%capacity]));
+          assert.deepEqual([...step.scene.output,...step.scene.queue], values.slice(0,step.counters[0]));
+          if (step.action === 'full') assert.deepEqual(step.scene, steps[i-1].scene);
+        }
+        assert.deepEqual(steps[0].scene.output, []);
+      } else if (source === 'sorting_overview') {
+        const expected = [...values].sort((a,b)=>a-b);
+        assert.deepEqual(last.scene.stable.map(record=>record.value), expected);
+        assert.deepEqual(last.scene.unstable.map(record=>record.value), expected);
+        last.scene.stable.forEach((record,i,items)=>{
+          if (i && items[i-1].value === record.value) assert.ok(items[i-1].id < record.id);
+        });
+        assert.deepEqual(steps[0].scene.stable.map(record=>record.value), values);
+      } else if (source === 'selection_sort') {
+        assert.deepEqual(last.values, [...values].sort((a,b)=>a-b));
+        assert.equal(last.counters[0], values.length*(values.length-1)/2);
+        assert.ok(last.counters[1] <= values.length-1);
+        steps.forEach(step=>{
+          assert.deepEqual([...step.values].sort((a,b)=>a-b), [...values].sort((a,b)=>a-b));
+          for (const i of step.settled) assert.equal(step.values[i],last.values[i]);
+        });
+      } else if (source === 'insertion_sort') {
+        assert.deepEqual(last.values, [...values].sort((a,b)=>a-b));
+        assert.equal(last.scene.hole, null); assert.equal(last.scene.key, null);
+        steps.forEach(step=>{
+          const valid = step.values.filter((_,i)=>i !== step.scene.hole);
+          if (step.scene.key !== null) valid.push(step.scene.key);
+          assert.deepEqual(valid.sort((a,b)=>a-b), [...values].sort((a,b)=>a-b));
+          const prefix = step.values.slice(0,step.scene.prefix);
+          if (step.scene.hole === null) assert.deepEqual(prefix,[...prefix].sort((a,b)=>a-b));
+        });
+      } else if (source === 'quick_sort') {
+        assert.deepEqual(last.values,[...values].sort((a,b)=>a-b));
+        assert.deepEqual(last.scene.pending,[]);
+        steps.forEach(step=>{
+          assert.deepEqual([...step.values].sort((a,b)=>a-b), [...values].sort((a,b)=>a-b));
+          for (const i of step.settled) assert.equal(step.values[i],last.values[i]);
+          const { left,right,lt,scan,gt,pivot } = step.scene;
+          if (pivot === null) return;
+          for (let i=left;i<=right;++i) {
+            if (i<lt) assert.ok(step.values[i]<pivot);
+            else if(i<scan) assert.equal(step.values[i],pivot);
+            else if(i>gt) assert.ok(step.values[i]>pivot);
+          }
+        });
       }
       // Mutating a late frame must never change an earlier frame used for rewind.
       const first = structuredClone(steps[0]);
       last.values[0] = 999;
-      if (last.scene.nodes) last.scene.nodes[0].value = 999;
+      if (last.scene.nodes?.length) last.scene.nodes[0].value = 999;
       assert.deepEqual(steps[0], first);
     }
     assert.throws(() => learningSteps(source,[]));
@@ -130,6 +183,23 @@ test('全部教学演示：独立动画快照、计数、边界与输入检查',
   assert.throws(() => learningSteps('student_records',[101]));
 });
 
+test('三种排序：穷举短序列中的重复值、负数和空位数据保留', () => {
+  for (let length=1; length<=5; ++length) for(let encoded=0; encoded<3**length; ++encoded) {
+    let value=encoded;
+    const input=Array.from({length},()=>{const digit=value%3-1;value=Math.floor(value/3);return digit;});
+    const sorted=[...input].sort((a,b)=>a-b);
+    for(const source of ['selection_sort','insertion_sort','quick_sort']) {
+      const steps=learningSteps(source,input);
+      assert.deepEqual(steps.at(-1).values,sorted);
+      for(const step of steps) {
+        const represented=step.values.filter((_,i)=>source!=='insertion_sort'||i!==step.scene.hole);
+        if(source==='insertion_sort'&&step.scene.key!==null)represented.push(step.scene.key);
+        assert.deepEqual(represented.sort((a,b)=>a-b),sorted);
+      }
+    }
+  }
+});
+
 test('JavaScript/Python 通信：课程、原有数据库、草稿、判题和关闭', { timeout: 35000 }, async () => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), 'dsa-bridge-test-'));
   let backend;
@@ -137,7 +207,7 @@ test('JavaScript/Python 通信：课程、原有数据库、草稿、判题和�
     backend = new Backend(root, { dataDir });
     const boot = await backend.request('bootstrap');
     assert.equal(boot.lessons[0].title, '算法与复杂度');
-    assert.equal(boot.lessons.length, 11);
+    assert.equal(boot.lessons.length, 28);
     assert.deepEqual(boot.lessons[0].stages.map(stage => stage.id), ['animation', 'practice', 'exam']);
     const exam = await backend.request('load_stage', { lesson: 'sorting.bubble_sort', stage: 'exam', language: 'C' });
     assert.equal(exam.problem.source.id, 'P1177');

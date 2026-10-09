@@ -83,12 +83,15 @@ async function main() {
     await page.locator('[data-aux="details"]').click();
     await page.locator('#course-search').fill('二分');
     assert.equal(await page.locator('.lesson-link').count(), 1);
-    assert.equal(await page.locator('.lesson-link').isDisabled(), true);
+    assert.equal(await page.locator('.lesson-link').isDisabled(), false);
+    await page.locator('#course-search').fill('哈希');
+    assert.equal(await page.locator('.lesson-link').count(), 1);
+    assert.equal(await page.locator('.lesson-link').isDisabled(), false);
     await page.locator('#course-search').fill('');
     await page.locator('#array-input').fill('3, 2, 1'); await page.locator('#generate').click();
     assert.equal(await page.locator('.array-cell').count(), 3);
     await page.locator('#timeline').evaluate(element => { element.value = element.max; element.dispatchEvent(new Event('input')); });
-    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '1 / 33');
+    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '1 / 84');
     await page.locator('[data-panel="notes"]').click();
     await page.locator('#notes').fill('JavaScript 界面测试笔记');
     await page.locator('#note-state').filter({ hasText: '已自动保存' }).waitFor();
@@ -101,7 +104,7 @@ async function main() {
     });
     await page.locator('#submit').click();
     await page.locator('#judge-status').filter({ hasText: /^AC$/ }).waitFor({ timeout: 20000 });
-    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '2 / 33');
+    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '2 / 84');
     assert.equal(await page.locator('.case-item').count(), 3);
     await screenshot(application, root, 'javascript-practice.png');
     await page.locator('#language').selectOption('C++');
@@ -129,7 +132,7 @@ async function main() {
     assert.match(terminal, /gcc[\s\S]*-std=c11/);
     assert.match(terminal, /warning:[\s\S]*RAW_WARNING/);
     assert.doesNotMatch(terminal, /[\u4e00-\u9fff]/, '终端不能添加中文编译/判题提示');
-    assert.equal(await page.locator('#progress-count').innerText(), '2 / 33', '样例通过不能完成真题环节');
+    assert.equal(await page.locator('#progress-count').innerText(), '2 / 84', '样例通过不能完成真题环节');
     await screenshot(application, root, 'luogu-exam-terminal.png');
     await page.evaluate(() => window.ace.edit('code-editor').setValue('int main( { return 0; }', -1));
     await page.locator('#run').click();
@@ -148,7 +151,7 @@ async function main() {
     assert.doesNotMatch(terminal.replaceAll('用户原始输出', ''), /[\u4e00-\u9fff]/);
     await page.evaluate(code => window.ace.edit('code-editor').setValue(code, -1), reference);
     await page.locator('#submit').click();
-    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '3 / 33');
+    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '3 / 84');
     assert.equal(await page.locator('#judge-status').innerText(), 'AC');
     assert.equal(await page.locator('.case-item').count(), 3);
     assert.doesNotMatch(await page.locator('#output').innerText(), /[\u4e00-\u9fff]/);

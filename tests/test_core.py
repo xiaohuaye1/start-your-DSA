@@ -5,6 +5,9 @@ from app.courses.loader import CourseLoader
 from app.judge.checker import matches
 from app.storage.database import Database
 from linear_oracles import linear_answer, bracket_answer
+from sorting_oracles import sorting_answer
+from advanced_oracles import LESSONS, advanced_answer
+from final_oracles import LESSONS as FINAL_LESSONS, final_answer
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -12,6 +15,8 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def expected_answer(lesson, stage, tokens):
     """Independent small-input oracle; do not assume every lesson is sorting."""
+    if lesson == 'linear.circular_queue' or lesson.startswith('sorting.') and lesson != 'sorting.bubble_sort':
+        return sorting_answer(lesson, stage, tokens)
     if lesson.startswith('linear.') and lesson != 'linear.arrays':
         return linear_answer(lesson, stage, tokens)
     if lesson == "sorting.bubble_sort":
@@ -65,7 +70,7 @@ def expected_answer(lesson, stage, tokens):
 class CoreTests(unittest.TestCase):
     def test_catalog_all_resources_and_expected_answers(self):
         loader = CourseLoader(ROOT / "content")
-        self.assertEqual(len(loader.lessons), 11)
+        self.assertEqual(len(loader.lessons), 28)
         problem_ids = set()
         for lesson in loader.lessons.values():
             self.assertEqual([stage.id for stage in lesson.stages], ["animation", "practice", "exam"])
@@ -83,10 +88,21 @@ class CoreTests(unittest.TestCase):
                             self.assertLessEqual(len(case.input), 30)
                             self.assertTrue(matches(bracket_answer(case.input), case.expected))
                             continue
+                        if lesson.id in LESSONS:
+                            self.assertTrue(matches(advanced_answer(lesson.id, stage.id, case.input), case.expected))
+                            if lesson.id == 'trees.binary_tree' and stage.id == 'exam':
+                                self.assertLessEqual(len(case.input.split()), 8)
+                                continue
+                        if lesson.id in FINAL_LESSONS:
+                            self.assertTrue(matches(final_answer(lesson.id, stage.id, case.input), case.expected))
+                            if lesson.id == 'advanced.hash_table' and stage.id == 'exam':
+                                self.assertLessEqual(len(case.input.split()), 8)
+                                self.assertTrue(all(len(word)<=10 for word in case.input.split()[1:]))
+                                continue
                         tokens = list(map(int, case.input.split()))
                         self.assertLessEqual(len(tokens), 25)
                         self.assertTrue(all(abs(value) <= 100 for value in tokens))
-                        expected = " ".join(map(str, expected_answer(lesson.id, stage.id, tokens)))
+                        expected = final_answer(lesson.id, stage.id, case.input) if lesson.id in FINAL_LESSONS else advanced_answer(lesson.id, stage.id, case.input) if lesson.id in LESSONS else " ".join(map(str, expected_answer(lesson.id, stage.id, tokens)))
                         self.assertTrue(matches(expected, case.expected))
                         if lesson.id == "sorting.bubble_sort" and stage.id == "exam":
                             values = tokens[1:]
@@ -144,3 +160,30 @@ class CoreTests(unittest.TestCase):
     def test_checker_whitespace(self):
         self.assertTrue(matches("1 2\r\n3 ", "1\n2 3"))
         self.assertFalse(matches("1 2", "1 3"))
+
+    def test_reused_luogu_exams_have_independent_drafts_and_progress(self):
+        from PySide6.QtCore import QCoreApplication
+        from app.bridge import Bridge
+        application = QCoreApplication.instance() or QCoreApplication([])
+        pairs = [('linear.circular_list', 'linear.circular_queue'),
+                 ('sorting.bubble_sort', 'sorting.quick_sort'),
+                 ('sorting.quick_sort', 'sorting.merge_sort'),
+                 ('sorting.merge_sort', 'sorting.heap_sort')]
+        with tempfile.TemporaryDirectory() as temporary:
+            bridge = Bridge(Path(temporary))
+            for old, new in pairs:
+                old_id = bridge.problem_ids[(old, 'exam')]
+                new_id = bridge.problem_ids[(new, 'exam')]
+                self.assertNotEqual(old_id, new_id)
+                bridge.database.complete(old, 'exam')
+                bridge.database.complete(new, 'exam')
+                bridge.database.save_draft(old_id, 'C', 'old lesson code')
+                bridge.database.save_draft(new_id, 'C', 'new lesson code')
+                bridge.database.submission(old_id, 'C', 'AC', 'submit', 'old lesson code')
+                self.assertIn((old, 'exam'), bridge.completed())
+                self.assertNotIn((new, 'exam'), bridge.completed())
+                self.assertEqual(bridge.database.draft(old_id, 'C'), 'old lesson code')
+                self.assertEqual(bridge.database.draft(new_id, 'C'), 'new lesson code')
+                bridge.database.submission(new_id, 'C', 'AC', 'submit', 'new lesson code')
+                self.assertIn((new, 'exam'), bridge.completed())
+            bridge.database.close()

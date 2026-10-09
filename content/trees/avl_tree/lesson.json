@@ -1,0 +1,25 @@
+{
+  "id": "trees.avl_tree",
+  "title": "平衡二叉树",
+  "stages": [
+    {
+      "id": "animation",
+      "title": "动画演示",
+      "kind": "animation",
+      "source": "avl_tree"
+    },
+    {
+      "id": "practice",
+      "title": "实操训练",
+      "kind": "practice",
+      "source": "problems/practice"
+    },
+    {
+      "id": "exam",
+      "title": "真题演练",
+      "kind": "practice",
+      "source": "problems/exam"
+    }
+  ]
+}
+

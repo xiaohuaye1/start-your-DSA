@@ -1,0 +1,25 @@
+{
+  "id": "sorting.overview",
+  "title": "排序算法概述",
+  "stages": [
+    {
+      "id": "animation",
+      "title": "动画演示",
+      "kind": "animation",
+      "source": "sorting_overview"
+    },
+    {
+      "id": "practice",
+      "title": "实操训练",
+      "kind": "practice",
+      "source": "problems/practice"
+    },
+    {
+      "id": "exam",
+      "title": "真题演练",
+      "kind": "practice",
+      "source": "problems/exam"
+    }
+  ]
+}
+

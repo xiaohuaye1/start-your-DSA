@@ -1,0 +1,24 @@
+{
+  "id": "sorting.binary_search.practice",
+  "title": "查找首次出现的位置",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "5 3\n1 2 2 4 6\n2 3 6\n",
+      "expected": "2 -1 5\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "6 3\n1 1 3 5 5 7\n1 5 4\n",
+      "expected": "1 4 -1\n"
+    },
+    {
+      "name": "case-3",
+      "input": "4 2\n2 4 6 8\n4 7\n",
+      "expected": "2 -1\n"
+    }
+  ]
+}
+

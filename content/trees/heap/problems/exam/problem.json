@@ -1,0 +1,31 @@
+{
+  "id": "trees.heap.P3378",
+  "title": "洛谷 P3378 · 堆",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "8\n1 4\n1 2\n2\n1 3\n3\n2\n3\n2\n",
+      "expected": "2\n3\n4\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "7\n1 3\n1 1\n1 1\n2\n3\n2\n3\n",
+      "expected": "1\n1\n"
+    },
+    {
+      "name": "case-3",
+      "input": "8\n1 5\n1 2\n1 4\n2\n3\n1 3\n2\n3\n",
+      "expected": "2\n3\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P3378",
+    "url": "https://www.luogu.com.cn/problem/P3378",
+    "checked_on": "2026-10-09",
+    "note": "题意转述；自编参考代码与3个轻量用例。本地 AC 不等于官方 AC。"
+  }
+}
+

@@ -1,5 +1,6 @@
 import { bubbleSteps, binarySteps, parseArray } from './algorithms.js';
 import { learningDemos, learningSteps, parseLearningInput, lessonDemo } from './learning-demos.js';
+import { renderStructure } from './structure-scenes.js';
 
 const $ = id => document.getElementById(id);
 const api = window.dsa;
@@ -11,14 +12,18 @@ let terminalSize = 0, terminalTruncated = false;
 const actionNames = { start: '准备开始', compare: '比较相邻元素', swap: '交换元素', keep: '保持顺序',
   settle: '完成这一轮', done: '演示完成', narrow: '缩小查找区间' };
 const learningActionNames = { read: '读取元素', accumulate: '更新总和', push: '入栈', pop: '出栈',
-  execute: '循环执行', inspect: '比较记录', update: '更新数据', access: '下标访问' };
+  execute: '循环执行', inspect: '比较记录', update: '更新数据', access: '下标访问',
+  split: '拆分区间', copy: '写入缓冲区', copyback: '复制回原区间', built: '完成建堆',
+  query: '开始查询', answer: '确认答案', enter: '进入节点', visit: '访问节点', return: '返回上一层',
+  link: '连接节点', height: '更新高度', rotate: '旋转修复', inserted: '完成插入',
+  heap_swap: '调整堆', heap_ready: '恢复堆序', edge: '加入边', enqueue: '加入队列', skip: '跳过已访问节点' };
 const courseOutline = [
   { title: '入门篇', lessons: ['算法与复杂度', '数据结构简介', '算法分析', '结构体回顾与学习'] },
   { title: '线性结构', lessons: ['数组', '链表', '循环链表', '双向链表', '栈', '队列', '循环队列'] },
   { title: '查找与排序', lessons: ['排序算法概述', '冒泡排序', '选择排序', '插入排序', '快速排序', '归并排序', '堆排序', '二分查找'] },
   { title: '树与图', lessons: ['二叉树', '平衡二叉树', '堆', '图的基础', '图的遍历'] },
-  { title: '高级专题', lessons: ['哈希表', '贪心算法', '动态规划'], collapsed: true },
-  { title: '综合练习', lessons: ['数据结构综合训练'], collapsed: true },
+  { title: '高级专题', lessons: ['哈希表', '贪心算法', '动态规划'] },
+  { title: '综合练习', lessons: ['数据结构综合训练'] },
 ];
 const courseGroupState = new Map();
 
@@ -192,7 +197,7 @@ async function loadStage(lesson, stage, options = {}) {
       $('concept-scene').hidden = !demo;
       $('animation-input-label').textContent = demo?.inputLabel || '初始数组';
       $('generate').textContent = demo ? '生成演示' : '生成数组';
-      $('array-input').placeholder = demo ? '1～8 个整数' : '1～16 个整数';
+      $('array-input').placeholder = demo ? demo.positiveOnly ? '1～8 个正整数' : '1～8 个整数' : '1～16 个整数';
       $('counter-one-label').textContent = demo?.counters[0] || '比较';
       $('counter-two-label').textContent = demo?.counters[1] || '交换';
       $('legend-active').textContent = demo ? '当前操作' : '当前比较';
@@ -339,6 +344,9 @@ function renderStep(animate) {
   stage.replaceChildren(...cellOrder);
   cellOrder.forEach((cell, index) => {
     cell.querySelector('.pointer-label')?.remove();
+    const hole = current.stage.source === 'insertion_sort' && step.scene.hole === index;
+    cell.firstChild.textContent = hole ? '·' : step.values[index];
+    cell.classList.toggle('array-hole', hole);
     cell.classList.toggle('compared', step.highlighted.includes(index));
     cell.classList.toggle('settled', step.settled.includes(index) && !step.highlighted.includes(index));
     if (step.highlighted.includes(index)) cell.append(textElement('span', demo ? step.pointers?.[index] || 'i' : current.stage.source === 'binary_search' ? 'mid' : index === step.highlighted[0] ? 'j' : 'j + 1', 'pointer-label'));
@@ -380,7 +388,7 @@ function renderStep(animate) {
     row.append(textElement('span', key), textElement('b', value)); return row;
   }));
   renderOperations();
-  $('mini-array').replaceChildren(...step.values.map((value, index) => textElement('span', value,
+  $('mini-array').replaceChildren(...step.values.map((value, index) => textElement('span', current.stage.source === 'insertion_sort' && step.scene.hole === index ? '·' : value,
     step.highlighted.includes(index) ? 'compared' : step.settled.includes(index) ? 'settled' : '')));
   $('action-title').textContent = step.label || learningActionNames[step.action] || actionNames[step.action] || step.action;
   $('step-explanation').textContent = step.explanation;
@@ -396,8 +404,9 @@ function renderStep(animate) {
   $('array-state').replaceChildren(...step.values.map((value, index) => {
     const state = step.highlighted.includes(index) ? 'compared' : step.settled.includes(index) ? 'settled' : '';
     const column = textElement('div', '', `array-state-column ${state}`);
-    column.append(textElement('span', `[${index}]`), textElement('b', value),
-      textElement('small', state === 'compared' ? demo ? '操作中' : '比较中' : state === 'settled' ? demo ? '已处理' : '已归位' : '待处理'));
+    const hole = current.stage.source === 'insertion_sort' && step.scene.hole === index;
+    column.append(textElement('span', `[${index}]`), textElement('b', hole ? '·' : value),
+      textElement('small', hole ? '空位 · 旧值无效' : state === 'compared' ? demo ? '操作中' : '比较中' : state === 'settled' ? demo ? '已处理' : '已归位' : '待处理'));
     return column;
   }));
   if (stepIndex === steps.length - 1) markComplete().catch(error => toast(error.message));
@@ -408,14 +417,131 @@ function renderConceptScene(step, demo) {
   const body = textElement('div', '', 'scene-body');
   const visual = textElement('div', '', 'scene-visual');
   const source = current.stage.source;
-  const line = (label, values, empty) => {
+  const line = (label, values, empty, activeIndex = values.length - 1) => {
     const row = textElement('div', '', 'scene-line');
     row.append(textElement('span', label, 'scene-label'));
     if (!values.length) row.append(textElement('span', empty, 'scene-empty'));
-    values.forEach((value, i) => row.append(textElement('span', value, `scene-chip ${i === values.length - 1 ? 'active' : ''}`)));
+    values.forEach((value, i) => row.append(textElement('span', value, `scene-chip ${i === activeIndex ? 'active' : ''}`)));
     visual.append(row);
   };
-  if (source === 'linear_sum') {
+  if (source === 'hash_table') {
+    const s=step.scene;
+    visual.append(textElement('h4',`线性探测 · M=${s.capacity} · home=${s.home??'—'} · probe=${s.probe??'—'}`));
+    const slots=textElement('div','','hash-grid');
+    s.table.forEach((slot,index)=>{
+      const card=textElement('div','',`record-card hash-slot ${index===s.probe?'active':''} ${slot.state==='deleted'?'deleted':''}`);
+      card.dataset.slot=index;
+      card.append(textElement('small',`[${index}]`),textElement('b',slot.state==='live'?slot.key:slot.state==='deleted'?'DEL':'EMPTY'),textElement('small',slot.state==='live'?`count=${slot.count}`:slot.state==='deleted'?'删除标记':'从未占用'));slots.append(card);
+    });visual.append(slots);line('查询次数',s.queries.map(q=>`${q.key} → ${q.count}`),'（尚未查询）');
+    visual.append(textElement('p','EMPTY 可停止查询；DEL 要继续。哈希同桶仍须比较完整键。','scene-note'));
+  } else if (source === 'greedy_intervals') {
+    const s=step.scene,maxEnd=Math.max(...s.intervals.map(item=>item.end));
+    visual.append(textElement('h4','按结束时间排序 · 标签为 [start,end)'));
+    for(const item of s.order){
+      const row=textElement('div','',`interval-row ${item.id===s.active?'active':''} ${s.selected.includes(item.id)?'chosen':''} ${s.rejected.includes(item.id)?'rejected':''}`);
+      row.dataset.activity=item.id;
+      const track=textElement('div','','interval-track'),bar=textElement('span','');bar.style.left=`${100*item.start/maxEnd}%`;bar.style.width=`${100*(item.end-item.start)/maxEnd}%`;track.append(bar);
+      row.append(textElement('span',`#${item.id+1} [${item.start},${item.end})`),track,textElement('small',s.selected.includes(item.id)?'选中':s.rejected.includes(item.id)?'跳过':'待查'));visual.append(row);
+    }
+    line('已选活动',s.selected.map(id=>`#${id+1}`),'（空）');
+    visual.append(textElement('p','起点固定 2*id，输入是正整数时长。实操与真题可输入自定义区间。','scene-note'));
+  } else if (source === 'knapsack_01') {
+    const s=step.scene;visual.append(textElement('h4',`0/1 背包 · 容量 ${s.capacity} · 重量循环 1/2/3`));
+    const grid=textElement('div','','dp-board');grid.style.setProperty('--dp-columns',s.capacity+2);
+    for(const [name,row] of [['容量',Array.from({length:s.capacity+1},(_,i)=>i)],['上一物品',s.before],['当前 dp',s.dp]]){
+      grid.append(textElement('span',name,'dp-caption'));
+      row.forEach((value,c)=>{const item=textElement('span',value,`${c===s.currentCapacity?'active':''} ${c===s.from?'source':''}`);item.dataset.capacity=c;grid.append(item);});
+    }
+    visual.append(grid);line('物品',s.items.map(item=>`#${item.id+1} w${item.weight}/v${item.value}`),'（空）',step.action==='done'?-1:step.variables.item-1);
+    if(s.candidate!==null)visual.append(textElement('p',`不选 ${s.exclude} / 选一次 ${s.candidate}，来源容量 ${s.from}。`,'scene-note'));
+    line('最终选择',s.selected.map(id=>`#${id+1}`),'（尚未回溯）');
+    visual.append(textElement('p','一维 dp 倒序更新容量；每件物品最多用一次，不要求恰好装满。','scene-note'));
+  } else if (source === 'optimal_merge') {
+    const s=step.scene;visual.append(renderStructure(s));line('当前小根堆',s.heap,'（空）',s.active[0]??-1);line('本轮取出',s.pair,'（尚未取出）');
+    for(const row of s.history.slice(-3))visual.append(textElement('p',`${row.left}+${row.right}=${row.cost} · 累计 ${row.total}`,'merge-record'));
+    visual.append(textElement('p','新重量回插后继续参与最小值选择；一堆时无需合并，代价 0。','scene-note'));
+  } else if (source === 'merge_sort') {
+    const s=step.scene;
+    visual.append(textElement('h4', `合并 [${s.left},${s.right}) · 中点 ${s.middle ?? '—'}`));
+    line('左区间',step.values.slice(s.left,s.middle??s.left),'（尚未拆分）');
+    line('右区间',step.values.slice(s.middle??s.right,s.right),'（空）');
+    line('辅助缓冲区',s.buffer.map((v,i)=>`${v} · #${s.bufferIds[i]+1}`),'（空）');
+    visual.append(textElement('p','缓冲区生成期间原数组不变；完整合并后复制回原区间，相等时先取左侧。','scene-note'));
+  } else if (source === 'lower_bound') {
+    const s=step.scene;
+    visual.append(textElement('h4',`target=${s.target??'—'} · 候选区间 [${s.left},${s.right})`));
+    line('候选元素',step.values.slice(s.left,s.right),'（区间已收缩为空）');
+    line('查询结果',s.answers.map(a=>`${a.target} → ${a.answer}`),'（尚未完成查询）');
+    visual.append(textElement('p','动画先排序示例输入，分别演示存在和不存在的目标。下标从 0 开始，题目答案从 1 开始。','scene-note'));
+  } else if (step.scene.type === 'tree' || step.scene.type === 'graph') {
+    const s=step.scene;
+    visual.append(renderStructure(s));
+    if(source==='binary_tree'){
+      for(const [key,name] of [['pre','前序'],['in','中序'],['post','后序']])line(name,s.outputs[key],'（尚未输出）');
+      line('递归栈',s.stack.map(id=>`#${id}`),'（空）');
+    } else if(source==='avl_tree'){
+      visual.append(textElement('p',s.updating?'插入 / 旋转处理中，上层高度尚待回溯更新。':'插入完成：每个节点的左右高度差不超过 1。','scene-note'));
+    } else if(source==='heap_sort'||source==='min_heap'){
+      line('有效堆',s.heap,'（空堆）');line(source==='heap_sort'?'有序后缀':'已删除输出',s.suffix??s.output,'（空）');
+      visual.append(textElement('p','节点编号表示当前数组槽位；调整过程中堆序可能暂未恢复。','scene-note'));
+    } else if(source==='graph_basics'){
+      const matrix=textElement('div','','adjacency-matrix');matrix.style.setProperty('--matrix-n',s.nodes.length+1);
+      for(let row=-1;row<s.nodes.length;row++)for(let col=-1;col<s.nodes.length;col++)matrix.append(textElement('span',row===-1?col===-1?'':'#'+(col+1):col===-1?'#'+(row+1):s.matrix[row][col],row===-1||col===-1?'matrix-label':''));
+      visual.append(matrix);line('各点度数',s.degree,'（空）');
+      s.matrix.forEach((row,id)=>line(`#${id+1} 邻居`,row.flatMap((connected,next)=>connected?[`#${next+1}`]:[]),'（无）'));
+      visual.append(textElement('p','无向边同时更新两个方向；度数之和等于边数的两倍。图由编号构造，输入数字是节点值。','scene-note'));
+    } else if(source==='graph_traversal'){
+      line('DFS',s.output.dfs.map(id=>`#${id}`),'（尚未访问）');line('BFS',s.output.bfs.map(id=>`#${id}`),'（尚未访问）');
+      line(s.mode==='DFS'?'调用栈':'队列',(s.mode==='DFS'?s.stack:s.queue).map(id=>`#${id}`),'（空）');
+      visual.append(textElement('p','从 #1 出发，只访问可达节点；邻居按编号升序，BFS 入队时就标记。','scene-note'));
+    }
+  } else if (source === 'ring_queue') {
+    const { slots, capacity, front, rear, count } = step.scene;
+    visual.append(textElement('h4', `循环槽位 · count=${count}/${capacity} · ${count === 0 ? 'EMPTY' : count === capacity ? 'FULL' : '可继续入队'}`));
+    const board = textElement('div', '', 'ring-board');
+    board.append(textElement('span', '↻', 'ring-direction'));
+    const used = new Set(Array.from({ length: count }, (_, i) => (front+i)%capacity));
+    slots.forEach((value, index) => {
+      const angle = -Math.PI/2 + index*2*Math.PI/capacity;
+      const card = textElement('div', '', `record-card ring-slot ${used.has(index) ? 'active' : 'inactive'}`);
+      card.style.left = `${50 + 29*Math.cos(angle)}%`; card.style.top = `${50 + 29*Math.sin(angle)}%`;
+      card.dataset.slot = index;
+      card.append(textElement('small', `槽位 ${index}`), textElement('b', value ?? '—'),
+        textElement('small', `${index === front ? 'front ' : ''}${index === rear ? 'rear' : ''}` || (used.has(index) ? '有效' : '无效旧值')));
+      board.append(card);
+    });
+    visual.append(board);
+    line('有效顺序', step.scene.queue, '（空队列）'); line('已输出', step.scene.output, '（尚未输出）');
+    visual.append(textElement('p', 'front==rear 不能单独判断空满；仅沿 front 读取 count 个槽位。', 'scene-note'));
+  } else if (source === 'sorting_overview') {
+    visual.append(textElement('h4', '原编号 # · 观察相同值的相对顺序'));
+    for (const [name, records] of [['稳定插入', step.scene.stable], ['选择排序', step.scene.unstable]]) {
+      line(name, records.map(record => `${record.value} · #${record.id+1}`), '（空）');
+    }
+    visual.append(textElement('p', '两者都能排好数值。选择排序不保证稳定；某组没改变同值顺序，不代表算法稳定。', 'scene-note'));
+  } else if (source === 'selection_sort') {
+    visual.append(textElement('h4', '当前最小候选 · 扫描完成后才交换'));
+    const card = textElement('div', '', 'sum-card');
+    card.append(textElement('span', `minimum=${step.scene.minimum < step.values.length ? step.scene.minimum : '—'}`), textElement('b', step.scene.selected ?? '—'));
+    visual.append(card, textElement('p', `当前有序前缀长度 ${step.scene.prefix}；比较与交换计数分开。`, 'scene-note'));
+  } else if (source === 'insertion_sort') {
+    visual.append(textElement('h4', 'key 暂存卡片 · “·”是当前空位'));
+    const card = textElement('div', '', 'sum-card');
+    card.append(textElement('span', `hole=${step.scene.hole ?? '—'}`), textElement('b', step.scene.key ?? '—')); visual.append(card);
+    line('槽位状态', step.values.map((value, i) => i === step.scene.hole ? '·' : value), '（空）');
+    visual.append(textElement('p', '空位不计入有效元素；key 与其它有效槽位一起仍是原输入。', 'scene-note'));
+  } else if (source === 'quick_sort') {
+    const { left, right, lt, scan, gt, pivot, pending } = step.scene;
+    visual.append(textElement('h4', `pivot=${pivot ?? '—'} · 当前区间 [${left},${right}]`));
+    const cards = textElement('div', '', 'record-grid partition-slots');
+    step.values.forEach((value, i) => {
+      const region = i < left || i > right ? '外侧' : i < lt ? '< pivot' : i < scan ? '= pivot' : i <= gt ? '未知' : '> pivot';
+      const card = textElement('div', '', `record-card ${step.highlighted.includes(i) ? 'active' : ''}`);
+      card.append(textElement('small', `[${i}] · ${region}`), textElement('b', value)); cards.append(card);
+    });
+    visual.append(cards, textElement('p', `待处理：${pending.length ? pending.map(task => `[${task.left},${task.right}]`).join(' / ') : '无'} · 栈末尾先处理`, 'scene-note'));
+    visual.append(textElement('p', '[lo,lt) <；[lt,i) =；[i,gt] 未知；(gt,hi] >。大于分支换入的新值需要重新检查。', 'scene-note'));
+  } else if (source === 'linear_sum') {
     visual.append(textElement('h4', '累计器 · 每读一个元素更新一次'));
     const total = textElement('div', '', 'sum-card');
     total.append(textElement('span', 'sum'), textElement('b', step.scene.sum)); visual.append(total);
@@ -510,7 +636,7 @@ function renderOperations() {
     row.title = step.explanation;
     row.setAttribute('aria-label', `跳转到第 ${index + 1} 步：${step.explanation}`);
     if (index === stepIndex) row.setAttribute('aria-current', 'step');
-    row.append(textElement('span', index + 1, 'operation-number'), textElement('span', step.action === 'compare' ? `比较 ${label}` : label));
+    row.append(textElement('span', index + 1, 'operation-number'), textElement('span', step.action === 'compare' && !label.startsWith('比较') ? `比较 ${label}` : label));
     row.addEventListener('click', () => seek(index));
     return row;
   }));

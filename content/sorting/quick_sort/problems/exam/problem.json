@@ -1,0 +1,31 @@
+{
+  "id": "sorting.quick_sort.P1177",
+  "title": "洛谷 P1177 · 排序",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "4\n3 1 4 2\n",
+      "expected": "1 2 3 4\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "6\n5 2 5 1 3 2\n",
+      "expected": "1 2 2 3 5 5\n"
+    },
+    {
+      "name": "case-3",
+      "input": "5\n2 4 1 3 2\n",
+      "expected": "1 2 2 3 4\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P1177",
+    "url": "https://www.luogu.com.cn/problem/P1177",
+    "checked_on": "2026-10-09",
+    "note": "题意转述；本地样例、测试与参考代码由本项目编写。本地 AC 不等于官方 AC。"
+  }
+}
+

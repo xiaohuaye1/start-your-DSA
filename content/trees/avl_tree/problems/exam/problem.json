@@ -1,0 +1,31 @@
+{
+  "id": "trees.avl_tree.P3369",
+  "title": "洛谷 P3369 · 普通平衡树",
+  "time_limit_ms": 2000,
+  "cases": [
+    {
+      "name": "case-1",
+      "input": "10\n1 3\n1 1\n1 2\n3 2\n4 2\n5 3\n6 1\n1 2\n2 2\n4 3\n",
+      "expected": "2\n2\n2\n2\n3\n",
+      "sample": true
+    },
+    {
+      "name": "case-2",
+      "input": "9\n1 5\n1 2\n1 4\n1 2\n3 3\n4 2\n2 2\n5 4\n6 3\n",
+      "expected": "3\n2\n2\n4\n"
+    },
+    {
+      "name": "case-3",
+      "input": "9\n1 4\n1 2\n1 6\n1 5\n2 4\n3 5\n4 2\n5 5\n6 5\n",
+      "expected": "2\n5\n2\n6\n"
+    }
+  ],
+  "source": {
+    "platform": "洛谷",
+    "id": "P3369",
+    "url": "https://www.luogu.com.cn/problem/P3369",
+    "checked_on": "2026-10-09",
+    "note": "题意转述；自编参考代码与3个轻量用例。本地 AC 不等于官方 AC。"
+  }
+}
+
