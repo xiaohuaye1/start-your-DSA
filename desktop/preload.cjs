@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('dsa', {
   judge: params => ipcRenderer.invoke('dsa:judge', params),
   cancel: () => ipcRenderer.invoke('dsa:cancel'),
   pickCompiler: () => ipcRenderer.invoke('dsa:pick-compiler'),
+  openSource: params => ipcRenderer.invoke('dsa:open-source', params),
   window: action => ipcRenderer.send('dsa:window', action),
   closeReady: () => ipcRenderer.invoke('dsa:close-ready'),
   onEvent: callback => {

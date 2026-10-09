@@ -28,8 +28,12 @@ class Bridge(QObject):
         self.settings = Settings(directory)
         self.database = Database(directory)
         self.loader = CourseLoader(ROOT / "content")
+        self.stage_keys = {(lesson.id, stage.id) for lesson in self.loader.lessons.values() for stage in lesson.stages}
+        self.problem_ids = {(lesson.id, stage.id): self.loader.problem(lesson, stage.source).id
+                            for lesson in self.loader.lessons.values() for stage in lesson.stages if stage.kind == "practice"}
         self.runner = JudgeRunner(self.settings, self)
         self.runner.log.connect(lambda text: self.send_event("log", text))
+        self.runner.terminal.connect(lambda event: self.send_event("terminal", event))
         self.runner.case_finished.connect(lambda case: self.send_event("case", asdict(case)))
         self.runner.finished.connect(self.judge_finished)
         self.incoming.connect(self.dispatch)
@@ -39,6 +43,11 @@ class Bridge(QObject):
 
     def send_event(self, event, payload):
         emit({"event": event, "payload": payload})
+
+    def completed(self):
+        # Keep saved history, but only credit practice submissions for the current problem.
+        return sorted(key for key in self.database.completed() if key in self.stage_keys and
+                      (key not in self.problem_ids or self.database.has_accepted_submission(self.problem_ids[key])))
 
     def lesson_stage(self, params):
         lesson = self.loader.lessons[params["lesson"]]
@@ -69,7 +78,7 @@ class Bridge(QObject):
         if method == "bootstrap":
             lessons = [{"id": lesson.id, "title": lesson.title, "stages": [asdict(stage) for stage in lesson.stages]}
                        for lesson in self.loader.lessons.values()]
-            return {"lessons": lessons, "completed": sorted(self.database.completed()),
+            return {"lessons": lessons, "completed": self.completed(),
                     "settings": self.settings.values, "dataDirectory": str(self.directory)}
         if method == "load_stage":
             if self.runner.busy:
@@ -86,7 +95,8 @@ class Bridge(QObject):
                 language = params.get("language", "C")
                 result["problem"] = {"id": problem.id, "title": problem.title,
                     "statement": problem.statement, "starter": problem.starter, "caseCount": len(problem.cases),
-                    "samples": [{"input": case.input, "expected": case.expected} for case in problem.cases if case.sample]}
+                    "samples": [{"input": case.input, "expected": case.expected} for case in problem.cases if case.sample],
+                    "source": problem.source}
                 reference = lesson.directory / stage.source / "reference.c"
                 result["reference"] = (reference.read_text(encoding="utf-8") if reference.exists()
                                        else self.loader.text(lesson, "reference.c"))
@@ -111,7 +121,7 @@ class Bridge(QObject):
             if stage.kind == "practice":
                 raise ValueError("练习环节需要提交通过后完成")
             self.database.complete(lesson.id, stage.id)
-            return sorted(self.database.completed())
+            return self.completed()
         if method == "save_settings":
             allowed = {key: value for key, value in params.items() if key in ("gcc", "g++", "speed")}
             for key in ("gcc", "g++"):
@@ -165,7 +175,7 @@ class Bridge(QObject):
             self.database.submission(job["problem_id"], job["language"], result.verdict, job["mode"], job["code"])
             if job["mode"] == "submit" and result.verdict == "AC":
                 self.database.complete(job["lesson"], job["stage"])
-            self.send_event("finished", {**asdict(result), "completed": sorted(self.database.completed()),
+            self.send_event("finished", {**asdict(result), "completed": self.completed(),
                                    "history": self.database.recent_submissions(job["problem_id"])})
         self.job = None
         if self.closing:

@@ -4,7 +4,6 @@
   "stages": [
     {"id": "animation", "title": "动画演示", "kind": "animation", "source": "bubble_sort"},
     {"id": "practice", "title": "实操训练", "kind": "practice", "source": "problems/basic_sort"},
-    {"id": "exam", "title": "真题演练", "kind": "practice", "source": "problems/exam_01"},
-    {"id": "extension", "title": "扩展", "kind": "reading", "source": "extension.md"}
+    {"id": "exam", "title": "真题演练", "kind": "practice", "source": "problems/exam_01"}
   ]
 }

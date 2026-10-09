@@ -35,6 +35,7 @@ class Problem:
     starter: str
     cases: tuple[TestCase, ...]
     time_limit_ms: int = 2000
+    source: dict | None = None
 
 
 @dataclass(frozen=True)

@@ -34,7 +34,8 @@ async function main() {
     await page.locator('#connection-label').filter({ hasText: '本地判题已连接' }).waitFor();
     await page.locator('.array-cell').first().waitFor();
     assert.equal(await page.locator('.array-cell').count(), 8);
-    assert.equal(await page.locator('#stage-tabs [role="tab"]').count(), 4);
+    assert.equal(await page.locator('#stage-tabs [role="tab"]').count(), 3);
+    assert.equal(await page.locator('[data-stage="extension"]').count(), 0);
     const typography = await page.evaluate(() => ({
       body: getComputedStyle(document.body).fontSize,
       heading: getComputedStyle(document.getElementById('lesson-title')).fontSize,
@@ -84,7 +85,7 @@ async function main() {
     await page.locator('#array-input').fill('3, 2, 1'); await page.locator('#generate').click();
     assert.equal(await page.locator('.array-cell').count(), 3);
     await page.locator('#timeline').evaluate(element => { element.value = element.max; element.dispatchEvent(new Event('input')); });
-    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '1 / 4');
+    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '1 / 3');
     await page.locator('[data-panel="notes"]').click();
     await page.locator('#notes').fill('JavaScript 界面测试笔记');
     await page.locator('#note-state').filter({ hasText: '已自动保存' }).waitFor();
@@ -97,8 +98,8 @@ async function main() {
     });
     await page.locator('#submit').click();
     await page.locator('#judge-status').filter({ hasText: /^AC$/ }).waitFor({ timeout: 20000 });
-    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '2 / 4');
-    assert.equal(await page.locator('.case-item').count(), 5);
+    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '2 / 3');
+    assert.equal(await page.locator('.case-item').count(), 3);
     await screenshot(application, root, 'javascript-practice.png');
     await page.locator('#language').selectOption('C++');
     await page.waitForFunction(() => document.getElementById('filename').textContent.endsWith('.cpp'));
@@ -111,11 +112,43 @@ async function main() {
     await page.locator('#judge-status').filter({ hasText: /^RUN$/ }).waitFor({ timeout: 20000 });
     assert.match(await page.locator('#output').innerText(), /1 2 3/);
     await page.locator('[data-stage="exam"]').click();
-    await page.waitForFunction(() => document.getElementById('filename').textContent.startsWith('adjacent_swaps'));
-    assert.match(await page.locator('#statement').innerText(), /原创/);
-    await page.locator('[data-stage="extension"]').click();
-    await page.locator('#reading-complete').click();
-    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '3 / 4');
+    await page.waitForFunction(() => document.getElementById('filename').textContent === 'p1177.c');
+    assert.match(await page.locator('#statement').innerText(), /洛谷 P1177/);
+    assert.equal(await page.locator('#problem-source').isVisible(), true);
+    const reference = await page.evaluate(async () => (await window.dsa.loadStage({
+      lesson: 'sorting.bubble_sort', stage: 'exam', language: 'C',
+    })).reference);
+    await page.evaluate(code => window.ace.edit('code-editor').setValue(code, -1), '#warning RAW_WARNING\n' + reference);
+    await page.locator('#run').click();
+    await page.waitForFunction(() => document.getElementById('judge-status').textContent === 'AC' &&
+      document.getElementById('output').textContent.includes('1 2 3 6 6 9'));
+    let terminal = await page.locator('#output').innerText();
+    assert.match(terminal, /gcc[\s\S]*-std=c11/);
+    assert.match(terminal, /warning:[\s\S]*RAW_WARNING/);
+    assert.doesNotMatch(terminal, /[\u4e00-\u9fff]/, '终端不能添加中文编译/判题提示');
+    assert.equal(await page.locator('#progress-count').innerText(), '2 / 3', '样例通过不能完成真题环节');
+    await screenshot(application, root, 'luogu-exam-terminal.png');
+    await page.evaluate(() => window.ace.edit('code-editor').setValue('int main( { return 0; }', -1));
+    await page.locator('#run').click();
+    await page.locator('#judge-status').filter({ hasText: /^CE$/ }).waitFor();
+    terminal = await page.locator('#output').innerText();
+    assert.match(terminal, /error:/);
+    assert.doesNotMatch(terminal, /[\u4e00-\u9fff]/);
+    await page.evaluate(() => window.ace.edit('code-editor').setValue(
+      '#include <stdio.h>\nint main(void){puts("用户原始输出");fputs("user stderr\\n", stderr);return 1;}', -1));
+    await page.locator('#custom-open').click(); await page.locator('#custom-input').fill('');
+    await page.locator('#custom-run').click();
+    await page.locator('#judge-status').filter({ hasText: /^RE$/ }).waitFor();
+    terminal = await page.locator('#output').innerText();
+    assert.match(terminal, /用户原始输出/);
+    assert.match(terminal, /user stderr/);
+    assert.doesNotMatch(terminal.replaceAll('用户原始输出', ''), /[\u4e00-\u9fff]/);
+    await page.evaluate(code => window.ace.edit('code-editor').setValue(code, -1), reference);
+    await page.locator('#submit').click();
+    await page.waitForFunction(() => document.getElementById('progress-count').textContent === '3 / 3');
+    assert.equal(await page.locator('#judge-status').innerText(), 'AC');
+    assert.equal(await page.locator('.case-item').count(), 3);
+    assert.doesNotMatch(await page.locator('#output').innerText(), /[\u4e00-\u9fff]/);
     await page.locator('#settings-open').click(); await page.locator('#settings-dialog').waitFor({ state: 'visible' });
     await page.locator('#gcc-path').fill(''); await page.locator('#settings-save').click();
     await page.locator('[data-stage="animation"]').click();
@@ -150,7 +183,7 @@ async function main() {
     await page.locator('[data-window="close"]').click();
     await page.waitForEvent('close');
     application = null;
-    console.log('Electron 实际界面测试通过：灰黑布局、小字号、轮次/记录跳转、计数回退、播放调速、长数组、小窗口、草稿、C/C++、判题、笔记和关闭。');
+    console.log('Electron 实际界面测试通过：三个环节、洛谷 P1177、原始终端输出、警告/编译错误/stdout/stderr、3 个轻量真题用例、动画、草稿和笔记。');
   } finally {
     if (application) await application.close();
     await fs.rm(dataDir, { recursive: true, force: true });

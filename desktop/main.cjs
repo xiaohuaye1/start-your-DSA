@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { Backend } = require('./backend.cjs');
@@ -30,6 +30,12 @@ app.whenReady().then(async () => {
       const selected = await dialog.showOpenDialog(window, { title: '选择编译器', properties: ['openFile'],
         filters: [{ name: '编译器', extensions: process.platform === 'win32' ? ['exe'] : ['*'] }] });
       return selected.canceled ? '' : selected.filePaths[0];
+    });
+    ipcMain.handle('dsa:open-source', async (event, params) => {
+      checkSender(event);
+      if (typeof params?.url !== 'string' || !/^https:\/\/www\.luogu\.com\.cn\/problem\/P[1-9]\d*$/.test(params.url))
+        throw new Error('仅支持打开洛谷原题链接');
+      await shell.openExternal(params.url);
     });
     ipcMain.on('dsa:window', (event, action) => {
       checkSender(event);

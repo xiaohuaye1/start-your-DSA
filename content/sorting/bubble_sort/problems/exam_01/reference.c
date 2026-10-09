@@ -1,28 +1,21 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-long long minimum_swaps(int a[], int n) {
-    long long count = 0;
-    for (int i = 0; i < n - 1; ++i) {
-        int swapped = 0;
-        for (int j = 0; j < n - i - 1; ++j) {
-            if (a[j] > a[j + 1]) {
-                int t = a[j];
-                a[j] = a[j + 1];
-                a[j + 1] = t;
-                ++count;
-                swapped = 1;
-            }
-        }
-        if (!swapped) break;
-    }
-    return count;
+static int a[100000];
+
+static int compare_ints(const void *left, const void *right) {
+    int x = *(const int *)left;
+    int y = *(const int *)right;
+    return (x > y) - (x < y);
 }
 
 int main(void) {
-    int n, a[2000];
-    if (scanf("%d", &n) != 1 || n < 1 || n > 2000) return 1;
+    int n;
+    if (scanf("%d", &n) != 1 || n < 1 || n > 100000) return 1;
     for (int i = 0; i < n; ++i)
         if (scanf("%d", &a[i]) != 1) return 1;
-    printf("%lld\n", minimum_swaps(a, n));
+    qsort(a, (size_t)n, sizeof(a[0]), compare_ints);
+    for (int i = 0; i < n; ++i)
+        printf("%d%c", a[i], i + 1 == n ? '\n' : ' ');
     return 0;
 }

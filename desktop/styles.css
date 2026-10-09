@@ -209,6 +209,9 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 11px; height:
 .ace-tomorrow-night .ace_marker-layer .ace_selection { background: #49443a !important }
 .output-panel { height: 204px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: #1d1d1d }
 .output-scroll { padding: 15px 18px; flex: 1; min-height: 0; overflow: auto; font-family: var(--mono); font-size: 12px; line-height: 1.8 }
+.output-scroll.raw-terminal { font-size: 13px; background: #1e1e1e; line-height: 1.6 }
+.terminal-text { margin: 0; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; color: #dedede }
+.terminal-command { color: #999 }.terminal-stderr { color: #ddb0b0 }
 .console-welcome { display: flex; gap: 12px; align-items: center; color: #8c8c8c; padding: 16px 0 }
 .console-welcome > svg { width: 27px; height: 27px }.console-welcome b { font-family: 'Microsoft YaHei UI',sans-serif; font-weight: 400; color: #c2c2c2; font-size: 13px }
 .console-welcome p { font-family: 'Microsoft YaHei UI',sans-serif; font-size: 11px; color: #929292; margin-top: 5px }
@@ -219,9 +222,6 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 11px; height:
 .case-item summary b { font-weight: 400 }.case-item.good summary b { color: var(--green) }.case-item.bad summary b { color: var(--red) }
 .case-item pre { margin: 0; white-space: pre-wrap; padding: 12px; line-height: 1.7; color: #bbb }
 .history-row { display: grid; grid-template-columns: 1fr 80px 60px; gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--border); color: #bbb; font-size: 11px }
-#reading-page { padding: 16px 22px }
-.reading-card { flex: 1; padding: 22px 27px; overflow: auto; border: 1px solid var(--border); border-radius: 4px; background: #202020 }
-.reading-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #aaa; padding: 4px 0; gap: 12px }
 .statusbar { height: 27px; flex-shrink: 0; background: #252525; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 23px; padding: 0 14px; font-size: 10px; color: #aaa }
 .statusbar > span:first-child { display: flex; align-items: center; gap: 7px; flex-shrink: 0 }
 .statusbar .shortcuts { margin-left: auto; color: #858585; font-size: 10px }.status-language { white-space: nowrap; color: #c1c1c1 }

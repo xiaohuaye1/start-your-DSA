@@ -52,12 +52,12 @@
       <section id="panel-mindmap" class="sidebar-panel" hidden><p class="sidebar-description">当前课程的知识关系</p><div id="knowledge-tree"></div></section>
       <section id="panel-notes" class="sidebar-panel" hidden><p class="sidebar-description" id="note-title">当前课程笔记</p><textarea id="notes" placeholder="记下你的理解、易错点和解题思路……"></textarea><span class="save-hint" id="note-state">自动保存</span></section>
       <section id="panel-ai" class="sidebar-panel" hidden><span class="feature-label">尚未接入模型</span><p class="sidebar-description">先整理你的问题，再复制给你使用的 AI 工具。</p><textarea id="ai-question" placeholder="我正在学习冒泡排序……&#10;我尝试了……&#10;我不明白……&#10;请先给我提示。"></textarea><button id="copy-question" class="button full">复制问题</button></section>
-      <div class="sidebar-progress"><div><span>学习进度</span><b id="progress-count">0 / 4</b></div><div class="progress-track"><span id="progress-fill"></span></div><p>灰色课程待开放</p></div>
+      <div class="sidebar-progress"><div><span>学习进度</span><b id="progress-count">0 / 3</b></div><div class="progress-track"><span id="progress-fill"></span></div><p>灰色课程待开放</p></div>
     </aside>
     <main class="workspace">
       <div class="document-tabs"><div class="document-tab"><svg><use href="#i-book"/></svg><span id="document-title">冒泡排序</span></div><button id="course-reveal" class="tab-add" title="查找课程" aria-label="查找课程"><svg><use href="#i-plus"/></svg></button></div>
       <nav id="stage-tabs" class="learning-stages" role="tablist" aria-label="学习环节"></nav>
-      <div class="lesson-heading"><div class="lesson-identity"><h1 id="lesson-title">冒泡排序</h1><div class="breadcrumb" id="breadcrumb">查找与排序 / 冒泡排序</div></div><div id="animation-tools" class="animation-tools"><label class="round-choice"><span id="round-label" class="sr-only">当前轮次</span><select id="round-select" aria-label="跳转轮次"></select></label><label class="array-input"><span>初始数组</span><input id="array-input" value="5, 2, 8, 1, 6, 3, 7, 4" aria-label="输入数组"><input id="target-input" value="6" aria-label="查找目标" hidden></label><button id="generate" class="button compact">生成数组</button><button id="reset-view" class="button compact"><svg><use href="#i-reset"/></svg>重置</button></div><span class="stage-badge" id="stage-badge" hidden>动手编程</span></div>
+      <div class="lesson-heading"><div class="lesson-identity"><h1 id="lesson-title">冒泡排序</h1><div class="breadcrumb" id="breadcrumb">查找与排序 / 冒泡排序</div></div><div id="animation-tools" class="animation-tools"><label class="round-choice"><span id="round-label" class="sr-only">当前轮次</span><select id="round-select" aria-label="跳转轮次"></select></label><label class="array-input"><span>初始数组</span><input id="array-input" value="5, 2, 8, 1, 6, 3, 7, 4" aria-label="输入数组"><input id="target-input" value="6" aria-label="查找目标" hidden></label><button id="generate" class="button compact">生成数组</button><button id="reset-view" class="button compact"><svg><use href="#i-reset"/></svg>重置</button></div><span class="stage-badge" id="stage-badge" hidden>动手编程</span><button id="problem-source" class="button compact" hidden>洛谷原题 ↗</button></div>
       <section id="animation-page" class="page">
         <div class="animation-main">
           <div class="animation-workspace">
@@ -79,7 +79,6 @@
         </div>
         <div class="output-panel"><div class="panel-tabs"><button class="active" data-output="output"><svg><use href="#i-terminal"/></svg>输出 / 编译结果</button><button data-output="cases">测试用例</button><button data-output="history">提交记录</button><span id="judge-status" class="judge-status">就绪</span></div><div id="output" class="output-scroll"><div class="console-welcome"><svg><use href="#i-terminal"/></svg><div><b>准备好，开始写代码吧。</b><p>运行样例检查结果，提交判题完成这一环节。</p></div></div></div><div id="cases" class="output-scroll" hidden></div><div id="history" class="output-scroll" hidden></div></div>
       </section>
-      <section id="reading-page" class="page" hidden><div id="reading" class="markdown reading-card"></div><div class="reading-footer"><span>把理解写进笔记，让知识留下来。</span><button id="reading-complete" class="button primary"><svg><use href="#i-check"/></svg>标记本环节已学完</button></div></section>
     </main>
   </div>
   <footer class="statusbar"><span><i id="connection-dot" class="green-dot"></i><span id="connection-label">正在连接本地服务</span></span><span id="status-message">Start Your DSA</span><span class="shortcuts">F5 运行 · Ctrl+Enter 提交 · Ctrl+S 保存</span><span class="status-language">C / C++</span></footer>
@@ -88,6 +87,6 @@
   <dialog id="custom-dialog"><div class="dialog-heading"><h2>自定义输入</h2><button data-close="custom-dialog" class="dialog-close">×</button></div><p>这次运行只显示输出，不判断答案是否正确。</p><textarea id="custom-input" spellcheck="false">5
 5 4 3 2 1
 </textarea><div class="dialog-footer"><button data-close="custom-dialog" class="button">取消</button><button id="custom-run" class="button primary">编译运行</button></div></dialog>
-  <dialog id="help-dialog"><div class="dialog-heading"><h2>欢迎来到 Start Your DSA</h2><button data-close="help-dialog" class="dialog-close">×</button></div><div class="help-body"><p>左侧选择课程，顶部切换学习环节。先看动画，再独立完成代码练习。</p><p><b>动画：</b>播放、单步前进和回退；选择轮次、点击操作记录或拖动进度条跳转；修改数组后生成新演示。长数组可以在画布内横向滚动。</p><p><b>练习：</b>支持 C/C++。样例通过后，提交全部测试用例；全部 AC 才完成环节。</p><p><b>笔记：</b>点击左侧笔记本图标。代码与笔记自动保存。</p><p>灰色课程待开放。本地判题运行你自己写的可信代码，不提供安全沙箱。AI 尚未接入；演练题为原创示例。</p><p class="data-location">个人数据：<span id="data-directory"></span></p></div><div class="dialog-footer"><button data-close="help-dialog" class="button primary">开始学习</button></div></dialog>
+  <dialog id="help-dialog"><div class="dialog-heading"><h2>欢迎来到 Start Your DSA</h2><button data-close="help-dialog" class="dialog-close">×</button></div><div class="help-body"><p>左侧选择课程，顶部切换学习环节。先看动画，再独立完成代码练习。</p><p><b>动画：</b>播放、单步前进和回退；选择轮次、点击操作记录或拖动进度条跳转；修改数组后生成新演示。长数组可以在画布内横向滚动。</p><p><b>练习：</b>支持 C/C++。样例通过后，提交全部测试用例；全部 AC 才完成环节。</p><p><b>笔记：</b>点击左侧笔记本图标。代码与笔记自动保存。</p><p>灰色课程待开放。本地判题运行你自己写的可信代码，不提供安全沙箱。AI 尚未接入；真题演练采用洛谷题目与本项目自建测试。</p><p class="data-location">个人数据：<span id="data-directory"></span></p></div><div class="dialog-footer"><button data-close="help-dialog" class="button primary">开始学习</button></div></dialog>
 </body>
 </html>

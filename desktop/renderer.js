@@ -6,11 +6,12 @@ let bootstrap, current, language = 'C', editor, loading = false, busy = false, c
 let steps = [], stepIndex = 0, playTimer = null, cellOrder = [], cellAnimations = [];
 let draftTimer, noteTimer, toastTimer, noteDirty = false, draftDirty = false;
 let completed = new Set();
+let terminalSize = 0, terminalTruncated = false;
 const actionNames = { start: '准备开始', compare: '比较相邻元素', swap: '交换元素', keep: '保持顺序',
   settle: '完成这一轮', done: '演示完成', narrow: '缩小查找区间' };
 const courseOutline = [
-  { title: '入门篇', lessons: ['算法与复杂度', '数据结构简介', '算法分析'] },
-  { title: '线性结构', lessons: ['数组', '链表', '栈', '队列'] },
+  { title: '入门篇', lessons: ['算法与复杂度', '数据结构简介', '算法分析', '结构体回顾与学习'] },
+  { title: '线性结构', lessons: ['数组', '链表', '循环链表', '双向链表', '栈', '队列', '循环队列'] },
   { title: '查找与排序', lessons: ['排序算法概述', '冒泡排序', '选择排序', '插入排序', '快速排序', '归并排序', '堆排序', '二分查找'] },
   { title: '树与图', lessons: ['二叉树', '平衡二叉树', '堆', '图的基础', '图的遍历'] },
   { title: '高级专题', lessons: ['哈希表', '贪心算法', '动态规划'], collapsed: true },
@@ -176,7 +177,8 @@ async function loadStage(lesson, stage, options = {}) {
     $('animation-tools').hidden = current.stage.kind !== 'animation';
     $('stage-badge').hidden = current.stage.kind === 'animation';
     $('stage-badge').textContent = current.stage.kind === 'animation' ? '可视化学习' : current.stage.kind === 'practice' ? '动手编程' : '知识拓展';
-    for (const page of ['animation', 'practice', 'reading']) $(page + '-page').hidden = current.stage.kind !== page;
+    for (const page of ['animation', 'practice']) $(page + '-page').hidden = current.stage.kind !== page;
+    $('problem-source').hidden = !current.problem?.source?.url;
     $('notes').value = current.note;
     $('note-title').textContent = `${current.title} · 课程笔记`;
     $('note-state').textContent = '自动保存'; noteDirty = false;
@@ -191,11 +193,13 @@ async function loadStage(lesson, stage, options = {}) {
       $('reference-code').textContent = current.reference;
       editor.setValue(current.draft, -1); draftDirty = false;
       $('draft-state').textContent = '已保存';
-      $('filename').textContent = current.stage.id === 'exam' ? `adjacent_swaps.${language === 'C' ? 'c' : 'cpp'}` : `bubble_sort.${language === 'C' ? 'c' : 'cpp'}`;
+      const filename = current.problem.source?.id.toLowerCase() || 'bubble_sort';
+      $('filename').textContent = `${filename}.${language === 'C' ? 'c' : 'cpp'}`;
+      if (current.problem.source) $('stage-badge').textContent = `${current.problem.source.platform} ${current.problem.source.id}`;
       clearOutput(); renderHistory(current.history);
       questionTab('statement'); outputTab('output');
       requestAnimationFrame(() => editor.resize());
-    } else markdown($('reading'), current.markdown);
+    }
     updateProgress();
     $('status-message').textContent = `${current.title} · ${current.stage.title}`;
   } finally { loading = false; $('language').value = language; }
@@ -411,7 +415,27 @@ function outputTab(value) {
 
 function clearOutput() {
   $('output').replaceChildren(); $('cases').replaceChildren();
-  $('judge-status').textContent = '就绪'; $('judge-status').className = 'judge-status';
+  terminalSize = 0; terminalTruncated = false;
+  const raw = current?.stage.id === 'exam';
+  $('output').classList.toggle('raw-terminal', raw);
+  if (raw) $('output').append(textElement('pre', '', 'terminal-text'));
+  $('judge-status').textContent = raw ? 'Ready' : '就绪'; $('judge-status').className = 'judge-status';
+}
+
+function appendTerminal(event) {
+  if (current?.stage.id !== 'exam' || terminalTruncated) return;
+  const terminal = $('output').querySelector('.terminal-text');
+  if (!terminal || typeof event.text !== 'string') return;
+  const limit = 4 * 1024 * 1024;
+  const text = event.text.slice(0, Math.max(0, limit - terminalSize));
+  const style = event.kind === 'command' ? 'terminal-command' : event.channel === 'stderr' ? 'terminal-stderr' : '';
+  terminal.append(textElement('span', text, style));
+  terminalSize += text.length;
+  if (text.length < event.text.length) {
+    terminalTruncated = true;
+    terminal.append(document.createTextNode('\n[Terminal display limit reached]\n'));
+  }
+  $('output').scrollTop = $('output').scrollHeight;
 }
 
 function log(message, status = '') {
@@ -422,17 +446,17 @@ function log(message, status = '') {
 
 function setBusy(value) {
   busy = value;
-  for (const id of ['run', 'submit', 'custom-open', 'language', 'reading-complete']) $(id).disabled = value;
+  for (const id of ['run', 'submit', 'custom-open', 'language']) $(id).disabled = value;
   $('stop').disabled = !value; editor.setReadOnly(value); buildCourses($('course-search').value.trim());
 }
 
 async function runJudge(mode, input = '') {
   if (busy || loading || current?.stage.kind !== 'practice') return;
   await saveDraft(); clearOutput(); outputTab('output'); setBusy(true);
-  $('judge-status').textContent = '正在编译…';
+  $('judge-status').textContent = current.stage.id === 'exam' ? 'Compiling…' : '正在编译…';
   try {
     await api.judge({ lesson: current.lesson, stage: current.stage.id, language, code: editor.getValue(), mode, input });
-  } catch (error) { setBusy(false); log(error.message, 'bad'); toast(error.message); }
+  } catch (error) { setBusy(false); if (current.stage.id !== 'exam') log(error.message, 'bad'); toast(error.message); }
 }
 
 function renderCase(result) {
@@ -442,8 +466,10 @@ function renderCase(result) {
   summary.append(textElement('b', `${result.verdict}  ·  ${result.elapsed_ms} ms`));
   item.append(summary, textElement('pre', `实际输出：\n${result.actual.slice(0, 20000)}\n\n预期输出：\n${(result.expected ?? '（自定义输入不比较答案）').slice(0, 20000)}\n\n标准错误：\n${result.stderr.slice(0, 20000)}`));
   $('cases').append(item);
-  log(`${result.name}   ${result.verdict}   ${result.elapsed_ms} ms`, good ? 'good' : 'bad');
-  if (result.expected === null) log(result.actual.slice(0, 20000));
+  if (current.stage.id !== 'exam') {
+    log(`${result.name}   ${result.verdict}   ${result.elapsed_ms} ms`, good ? 'good' : 'bad');
+    if (result.expected === null) log(result.actual.slice(0, 20000));
+  }
 }
 
 function renderHistory(records) {
@@ -498,13 +524,13 @@ function attachEvents() {
   $('stop').addEventListener('click', guard(() => api.cancel()));
   $('custom-open').addEventListener('click', () => $('custom-dialog').showModal());
   $('custom-run').addEventListener('click', guard(async () => { $('custom-dialog').close(); await runJudge('custom', $('custom-input').value); }));
-  $('reading-complete').addEventListener('click', guard(async () => { await markComplete(); toast('本环节已学完，学习进度已保存'); }));
   $('notes').addEventListener('input', () => {
     noteDirty = true; $('note-state').textContent = '正在保存…'; clearTimeout(noteTimer);
     noteTimer = setTimeout(() => saveNotes().catch(error => toast(error.message)), 500);
   });
   $('copy-question').addEventListener('click', guard(async () => { await navigator.clipboard.writeText($('ai-question').value); toast('问题已复制'); }));
   $('help-open').addEventListener('click', () => $('help-dialog').showModal());
+  $('problem-source').addEventListener('click', guard(() => api.openSource({ url: current.problem.source.url })));
   $('settings-open').addEventListener('click', () => {
     if (busy) { toast('请在判题结束后修改设置'); return; }
     $('gcc-path').value = bootstrap.settings.gcc || '';
@@ -521,14 +547,20 @@ function attachEvents() {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); guard(saveAll)(); }
   });
   new ResizeObserver(() => { if (steps.length) positionCells(steps[stepIndex]); }).observe($('array-stage').parentElement);
-  document.addEventListener('click', event => { if (event.target.closest('a')) event.preventDefault(); });
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a');
+    if (!link) return;
+    event.preventDefault();
+    if (/^https:\/\/www\.luogu\.com\.cn\/problem\/P[1-9]\d*$/.test(link.href)) guard(() => api.openSource({ url: link.href }))();
+  });
   api.onEvent(guard(async message => {
-    if (message.event === 'log') log(message.payload);
+    if (message.event === 'log' && current?.stage.id !== 'exam') log(message.payload);
+    if (message.event === 'terminal') appendTerminal(message.payload);
     if (message.event === 'case') renderCase(message.payload);
     if (message.event === 'finished') {
       const result = message.payload; setBusy(false);
       const good = result.verdict === 'AC' || result.verdict === 'RUN';
-      log(`\n${result.verdict} · ${result.message}`, good ? 'good' : 'bad');
+      if (current.stage.id !== 'exam') log(`\n${result.verdict} · ${result.message}`, good ? 'good' : 'bad');
       $('judge-status').textContent = result.verdict;
       $('judge-status').className = `judge-status ${good ? 'good' : 'bad'}`;
       updateProgress(result.completed); renderHistory(result.history);

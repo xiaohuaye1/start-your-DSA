@@ -1,12 +1,17 @@
 {
-  "id": "bubble_sort.adjacent_swaps",
-  "title": "最少相邻交换次数（原创演练）",
+  "id": "luogu.P1177",
+  "title": "洛谷 P1177 · 排序",
   "time_limit_ms": 2000,
+  "source": {
+    "platform": "洛谷",
+    "id": "P1177",
+    "url": "https://www.luogu.com.cn/problem/P1177",
+    "checked_on": "2026-10-09",
+    "statement": "题意转述；本地样例与测试由本项目生成"
+  },
   "cases": [
-    {"name": "样例：三个数", "file": "cases/sample", "sample": true},
-    {"name": "有序数组", "file": "cases/sorted"},
-    {"name": "逆序数组", "file": "cases/reverse"},
-    {"name": "重复元素", "file": "cases/duplicate"},
-    {"name": "单个元素", "file": "cases/single"}
+    {"name": "Local sample", "file": "cases/sample", "sample": true},
+    {"name": "Reverse", "file": "cases/reverse"},
+    {"name": "Duplicates", "file": "cases/duplicate"}
   ]
 }

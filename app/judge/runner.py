@@ -1,5 +1,8 @@
 """QProcess 事件驱动：编译一次，逐个测试；不阻塞窗口。"""
 import os
+import codecs
+import shlex
+import subprocess
 import tempfile
 from pathlib import Path
 from PySide6.QtCore import QObject, QProcess, QProcessEnvironment, QTimer, QElapsedTimer, Signal
@@ -10,9 +13,10 @@ from app.judge.checker import verdict
 
 class JudgeRunner(QObject):
     log = Signal(str)
+    terminal = Signal(object)
     case_finished = Signal(object)
     finished = Signal(object)
-    OUTPUT_LIMIT = 1024 * 1024
+    OUTPUT_LIMIT = 2 * 1024 * 1024
 
     def __init__(self, settings, parent=None):
         super().__init__(parent)
@@ -50,7 +54,7 @@ class JudgeRunner(QObject):
             self.executable = directory / ("program.exe" if os.name == "nt" else "program")
             environment = QProcessEnvironment.systemEnvironment()
             environment.insert("PATH", str(Path(compiler).parent) + os.pathsep + environment.value("PATH"))
-            self.process.setProcessEnvironment(environment)
+            self.environment = environment
             self.process.setWorkingDirectory(str(directory))
             self.log.emit(f"编译：{compiler}（{language}）")
             self._launch("compile", compiler, arguments(source, self.executable, language), 20000)
@@ -62,6 +66,15 @@ class JudgeRunner(QObject):
         self.stop_reason = ""
         self.stdout = bytearray()
         self.stderr = bytearray()
+        self.out_decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+        self.err_decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+        environment = QProcessEnvironment(self.environment)
+        if phase == "compile":
+            environment.insert("LC_ALL", "C")
+            environment.insert("LANG", "C")
+        self.process.setProcessEnvironment(environment)
+        command = subprocess.list2cmdline([program, *args]) if os.name == "nt" else shlex.join([program, *args])
+        self.terminal.emit({"kind": "command", "phase": phase, "text": "$ " + command + "\n"})
         self.clock.start()
         self.timer.start(timeout)
         self.process.start(program, args)
@@ -73,15 +86,23 @@ class JudgeRunner(QObject):
 
     def _read(self):
         remaining = self.OUTPUT_LIMIT - len(self.stdout) - len(self.stderr)
-        # 即使超限也排空 Qt 缓冲，避免不断积累；保存的诊断最多 1 MiB。
+        # 即使超限也排空 Qt 缓冲，避免不断积累；保存内容受 OUTPUT_LIMIT 限制。
         out = bytes(self.process.readAllStandardOutput())
         err = bytes(self.process.readAllStandardError())
         overflow = len(out) + len(err) > remaining
-        self.stdout.extend(out[:max(0, remaining)])
+        kept_out = out[:max(0, remaining)]
+        self.stdout.extend(kept_out)
         remaining -= len(out)
-        self.stderr.extend(err[:max(0, remaining)])
+        kept_err = err[:max(0, remaining)]
+        self.stderr.extend(kept_err)
+        self._terminal_text("stdout", self.out_decoder.decode(kept_out))
+        self._terminal_text("stderr", self.err_decoder.decode(kept_err))
         if overflow:
             self._stop("OLE")
+
+    def _terminal_text(self, channel, text):
+        if text:
+            self.terminal.emit({"kind": "output", "phase": self.phase, "channel": channel, "text": text})
 
     def _stop(self, reason):
         if self.busy and not self.stop_reason:
@@ -100,6 +121,8 @@ class JudgeRunner(QObject):
             return
         self.timer.stop()
         self._read()
+        self._terminal_text("stdout", self.out_decoder.decode(b"", final=True))
+        self._terminal_text("stderr", self.err_decoder.decode(b"", final=True))
         out = self.stdout.decode("utf-8", errors="replace")
         err = self.stderr.decode("utf-8", errors="replace")
         if self.stop_reason == "CANCELLED":

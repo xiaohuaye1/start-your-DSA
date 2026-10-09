@@ -1,4 +1,5 @@
 """仅测试后端，不加载任何 Qt 图形界面。"""
+import os
 import shutil
 import tempfile
 import unittest
@@ -67,7 +68,7 @@ class JudgeTests(unittest.TestCase):
             problem = self.loader.problem(self.lesson, relative)
             result = self.judge(self.loader.text(self.lesson, reference), problem.cases)
             self.assertEqual(result.verdict, "AC", result.message)
-            self.assertEqual(len(result.cases), 5)
+            self.assertEqual(len(result.cases), len(problem.cases))
 
     @unittest.skipUnless(shutil.which("g++"), "需要 G++")
     def test_cpp(self):
@@ -75,7 +76,34 @@ class JudgeTests(unittest.TestCase):
         self.assertEqual(self.judge(code, [TestCase("CPP", "21\n", "42")], "C++").verdict, "AC")
 
     def test_compile_error(self):
+        events = []
+        self.runner.terminal.connect(events.append)
         self.assertEqual(self.judge("int main( { nope }").verdict, "CE")
+        diagnostics = "".join(event["text"] for event in events if event["kind"] == "output")
+        self.assertIn("error:", diagnostics)
+        self.assertNotIn("编译失败", diagnostics)
+
+    def test_raw_stdout_stderr_and_utf8(self):
+        events = []
+        self.runner.terminal.connect(events.append)
+        code = '#include <stdio.h>\nint main(void){putchar(0xe4);fflush(stdout);putchar(0xb8);fflush(stdout);putchar(0xad);puts("");fputs("raw stderr\\n",stderr);}'
+        result = self.judge(code, [TestCase("中文用例名称", "", None)])
+        stdout = "".join(event["text"] for event in events if event.get("channel") == "stdout")
+        stderr = "".join(event["text"] for event in events if event.get("channel") == "stderr" and event["phase"] == "run")
+        newline = "\r\n" if os.name == "nt" else "\n"
+        self.assertEqual(stdout, "中" + newline)
+        self.assertEqual(stderr, "raw stderr" + newline)
+        self.assertEqual(stdout, result.cases[0].actual)
+        self.assertEqual(stderr, result.cases[0].stderr)
+        self.assertNotIn("中文用例名称", "".join(event["text"] for event in events))
+
+    @unittest.skipUnless(shutil.which("g++"), "需要 G++")
+    def test_luogu_reference_cpp_lightweight_cases(self):
+        problem = self.loader.problem(self.lesson, "problems/exam_01")
+        result = self.judge(self.loader.text(self.lesson, "problems/exam_01/reference.c"), problem.cases, "C++")
+        self.assertEqual(result.verdict, "AC", result.message)
+        self.assertEqual(len(result.cases), 3)
+        self.assertTrue(all(len(case.actual) < 100 for case in result.cases))
 
     def test_wrong_answer(self):
         result = self.judge('#include <stdio.h>\nint main(void){puts("wrong");}', [TestCase("WA", "", "right")])
@@ -90,7 +118,8 @@ class JudgeTests(unittest.TestCase):
     def test_output_limit(self):
         self.runner.OUTPUT_LIMIT = 8192
         code = '#include <stdio.h>\nint main(void){for(;;) puts("abcdefghijklmnopqrstuvwxyz0123456789");}'
-        result = self.judge(code)
+        # Windows 管道刷新较慢，给超限检测留出时间，避免先触发运行超时。
+        result = self.judge(code, time_limit=10000)
         self.assertEqual(result.verdict, "OLE")
         self.assertLessEqual(len(result.cases[0].actual.encode()), 8192)
 

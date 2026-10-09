@@ -46,5 +46,10 @@ class Database:
     def recent_submissions(self, problem):
         return list(self.connection.execute("SELECT verdict,mode,created FROM submissions WHERE problem=? ORDER BY id DESC LIMIT 20", (problem,)))
 
+    def has_accepted_submission(self, problem):
+        return self.connection.execute(
+            "SELECT 1 FROM submissions WHERE problem=? AND verdict='AC' AND mode='submit' LIMIT 1",
+            (problem,)).fetchone() is not None
+
     def close(self):
         self.connection.close()

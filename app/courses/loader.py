@@ -38,9 +38,10 @@ class CourseLoader:
         cases = []
         for entry in data["cases"]:
             case = self._safe(directory, entry["file"])
-            cases.append(TestCase(entry["name"], case.with_suffix(".in").read_text(encoding="utf-8"),
-                                  case.with_suffix(".out").read_text(encoding="utf-8"), entry.get("sample", False)))
+            input_text = case.with_suffix(".in").read_text(encoding="utf-8")
+            expected = case.with_suffix(".out").read_text(encoding="utf-8")
+            cases.append(TestCase(entry["name"], input_text, expected, entry.get("sample", False)))
         return Problem(data["id"], data["title"],
                        (directory / "statement.md").read_text(encoding="utf-8"),
                        (directory / "starter.c").read_text(encoding="utf-8"), tuple(cases),
-                       data.get("time_limit_ms", 2000))
+                       data.get("time_limit_ms", 2000), data.get("source"))
