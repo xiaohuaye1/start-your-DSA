@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
+const { seekStep, finishAnimation, seekPhase } = require('./animation-actions.cjs');
 const lessons = [
   ['sorting.merge_sort','归并排序','merge_sort','P1177'],
   ['sorting.heap_sort','堆排序','heap_sort','P1177'],
@@ -66,13 +67,13 @@ async function main() {
       const phases = {merge_sort:'复制回原区间',heap_sort:'完成建堆',lower_bound:'确认答案',
         binary_tree:'中序遍历',avl_tree:'旋转修复',min_heap:'查看最小值',
         graph_basics:'加入无向边',graph_traversal:'BFS 队列与分层'};
-      await page.locator('#round-select').selectOption({ label: phases[source] });
+      await seekPhase(page, phases[source]);
       if (['heap_sort','binary_tree','avl_tree','min_heap','graph_basics','graph_traversal'].includes(source)) {
         assert.equal(await page.locator('.structure-diagram').count(), 1);
         assert.ok(await page.locator('.structure-node').count() > 0);
       }
       await capture(app, root, `lesson-${source}.png`);
-      await page.locator('#timeline').evaluate(element => { element.value = element.max; element.dispatchEvent(new Event('input')); });
+      await finishAnimation(page);
       await page.waitForFunction(expected => document.getElementById('progress-count').textContent === expected, `${index * 3 + 1} / 84`);
       await page.locator('[data-panel="mindmap"]').click();
       assert.match(await page.locator('#knowledge-tree').innerText(), new RegExp(title));
@@ -113,22 +114,17 @@ async function main() {
     await page.locator('[data-stage="animation"]').click();
     await page.locator('#animation-page').waitFor({ state: 'visible' });
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1060, 740));
-    await page.locator('#array-input').fill('1, 2, 3, 4, 5, 6, 7, 8');
-    await page.locator('#generate').click();
-    assert.equal(await page.locator('.array-cell').count(), 8);
+    assert.ok(await page.locator('.array-cell').count() > 0 && await page.locator('.array-cell').count() <= 8);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.ok(await page.locator('#concept-scene').evaluate(element => element.clientHeight) >= 50);
     await capture(app, root, 'advanced-small.png');
-    await page.locator('#array-input').fill('1,2,3,4,5,6,7,8,9'); await page.locator('#generate').click();
-    await page.locator('#toast').filter({ hasText: '1～8' }).waitFor();
-    assert.equal(await page.locator('.array-cell').count(), 8);
+    assert.equal(await page.locator('#array-input, #generate').count(), 0);
     assert.deepEqual(errors, []);
     for (const [lesson,source] of [['trees.avl_tree','avl_tree'],['graphs.basics','graph_basics'],['graphs.traversal','graph_traversal']]) {
       await page.locator(`.lesson-link[data-lesson="${lesson}"]`).click();
       await page.waitForFunction(source=>document.getElementById('array-canvas').dataset.demo===source,source);
-      await page.locator('#array-input').fill('1,2,3,4,5,6,7,8'); await page.locator('#generate').click();
-      await page.locator('#timeline').evaluate(element=>{element.value=element.max;element.dispatchEvent(new Event('input'));});
-      assert.equal(await page.locator('.structure-node').count(), 8);
+      await finishAnimation(page);
+      assert.ok(await page.locator('.structure-node').count() > 0 && await page.locator('.structure-node').count() <= 8);
       assert.equal(await page.locator('.structure-diagram').evaluate(element=>getComputedStyle(element).stroke), 'none');
       assert.equal(await page.locator('#array-scroll').evaluate(element=>getComputedStyle(element).display), 'none');
       await page.locator('#concept-scene').evaluate(element=>element.scrollTop=0);
@@ -137,7 +133,7 @@ async function main() {
         return [...document.querySelectorAll('.structure-node rect')].every(element=>{
           const rect=element.getBoundingClientRect(); return rect.top>=panel.top&&rect.bottom<=panel.bottom;
         });
-      }), true, '小窗口中八个树 / 图节点应完整显示');
+      }), true, '小窗口中默认树 / 图节点应完整显示');
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       assert.ok(await page.locator('#concept-scene').evaluate(element=>element.clientHeight)>=50);
       await capture(app,root,`advanced-small-${source}.png`);

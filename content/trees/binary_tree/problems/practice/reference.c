@@ -1,19 +1,93 @@
 #include <stdio.h>
-static int children[101][2], printed;
-void preorder(int node) {
-    if (!node) return;
-    if (printed++) putchar(' ');
-    printf("%d",node); preorder(children[node][0]); preorder(children[node][1]);
+#include <stdlib.h>
+#include <string.h>
+#define MAX 12
+typedef struct TreeNode {
+    char data;
+    struct TreeNode *lchild, *rchild;
+} TreeNode;
+typedef struct { TreeNode *data[MAX]; int front, rear; } Queue;
+
+void queueinit(Queue *Q) { Q->front = Q->rear = 0; }
+int queuesize(const Queue *Q) { return Q->rear - Q->front; }
+int input(Queue *Q, TreeNode *e) {
+    if (Q->rear == MAX) return 0;
+    Q->data[Q->rear++] = e; return 1;
+}
+TreeNode *output(Queue *Q) {
+    return Q->front < Q->rear ? Q->data[Q->front++] : NULL;
+}
+void release(TreeNode *T) {
+    if (!T) return;
+    release(T->lchild); release(T->rchild); free(T);
+}
+int createTree(TreeNode **T, const char *str, int *idx) {
+    char ch = str[(*idx)++];
+    if (ch == '#') { *T = NULL; return 1; }
+    if (ch < 'A' || ch > 'Z') return 0;
+    *T = (TreeNode *)malloc(sizeof(TreeNode));
+    if (!*T) return 0;
+    (*T)->data = ch; (*T)->lchild = (*T)->rchild = NULL;
+    return createTree(&(*T)->lchild, str, idx) && createTree(&(*T)->rchild, str, idx);
+}
+void preorder(const TreeNode *T) {
+    if (!T) return;
+    putchar(T->data); preorder(T->lchild); preorder(T->rchild);
+}
+void inorder(const TreeNode *T) {
+    if (!T) return;
+    inorder(T->lchild); putchar(T->data); inorder(T->rchild);
+}
+void postorder(const TreeNode *T) {
+    if (!T) return;
+    postorder(T->lchild); postorder(T->rchild); putchar(T->data);
+}
+void levelorder(TreeNode *T) {
+    if (!T) return;
+    Queue Q; queueinit(&Q); input(&Q, T);
+    while (queuesize(&Q)) {
+        TreeNode *current = output(&Q);
+        putchar(current->data);
+        if (current->lchild) input(&Q, current->lchild);
+        if (current->rchild) input(&Q, current->rchild);
+    }
+}
+int depth(TreeNode *T) {
+    if (!T) return 0;
+    Queue Q; queueinit(&Q); input(&Q, T);
+    int levels = 0;
+    while (queuesize(&Q)) {
+        int count = queuesize(&Q);
+        while (count--) {
+            TreeNode *current = output(&Q);
+            if (current->lchild) input(&Q, current->lchild);
+            if (current->rchild) input(&Q, current->rchild);
+        }
+        ++levels;
+    }
+    return levels;
+}
+int leafCount(const TreeNode *T) {
+    if (!T) return 0;
+    if (!T->lchild && !T->rchild) return 1;
+    return leafCount(T->lchild) + leafCount(T->rchild);
+}
+int nodeCount(const TreeNode *T) {
+    return T ? 1 + nodeCount(T->lchild) + nodeCount(T->rchild) : 0;
 }
 int main(void) {
-    int n; if (scanf("%d",&n)!=1 || n<1 || n>100) return 1;
-    int root=0;
-    for (int i=0; i<n; ++i) {
-        int node,left,right;
-        if (scanf("%d%d%d",&node,&left,&right)!=3 || node<1 || node>n || left<0 || left>n || right<0 || right>n) return 1;
-        if (i==0) root=node;
-        children[node][0]=left; children[node][1]=right;
+    char str[MAX * 2 + 2];
+    TreeNode *T = NULL;
+    int idx = 0;
+    if (scanf("%25s", str) != 1) return 1;
+    if (!createTree(&T, str, &idx) || str[idx] != '\0' || nodeCount(T) > MAX) {
+        release(T); return 1;
     }
-    preorder(root); putchar('\n'); return 0;
+    if (T) preorder(T); else printf("EMPTY"); putchar('\n');
+    if (T) inorder(T); else printf("EMPTY"); putchar('\n');
+    if (T) postorder(T); else printf("EMPTY"); putchar('\n');
+    if (T) levelorder(T); else printf("EMPTY"); putchar('\n');
+    printf("%d %d %d\n", depth(T), leafCount(T), nodeCount(T));
+    release(T);
+    return 0;
 }
-

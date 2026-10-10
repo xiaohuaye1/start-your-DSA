@@ -1,21 +1,25 @@
 {
-  "id": "intro.struct_review.practice",
-  "title": "找出成绩最高的学生",
+  "id": "intro.struct_review.practice.workshop_v2",
+  "title": "结构体实战：学生记录管理器",
   "time_limit_ms": 2000,
   "cases": [
     {
-      "name": "样例：基础用例",
-      "file": "cases/1",
+      "name": "修改成绩、同分比较与删除",
+      "input": "3 8\n1 60\n2 90\n3 90\n4\n1 1 95\n4\n2 1\n3 4 90\n4\n6 1\n5\n",
+      "expected": "2 90\nOK\n1 95\n95\nOK\n2 90\nNOT_FOUND\n3 270\n",
       "sample": true
     },
     {
-      "name": "普通用例 2",
-      "file": "cases/2"
+      "name": "零分也是有效记录",
+      "input": "2 7\n4 0\n7 20\n6 4\n3 4 30\n1 8 40\n2 9\n1 4 25\n4\n5\n",
+      "expected": "0\nEXISTS\nNOT_FOUND\nNOT_FOUND\nOK\n4 25\n2 45\n",
+      "sample": false
     },
     {
-      "name": "普通用例 3",
-      "file": "cases/3"
+      "name": "删空后重新添加",
+      "input": "1 7\n5 70\n2 5\n4\n5\n3 2 80\n3 1 80\n4\n6 2\n",
+      "expected": "70\nEMPTY\n0 0\nOK\nOK\n1 80\n80\n",
+      "sample": false
     }
   ]
 }
-

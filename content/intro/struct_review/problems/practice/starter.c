@@ -1,21 +1,10 @@
 #include <stdio.h>
-typedef struct {
-    int id;
-    int score;
-} Student;
-Student best_student(const Student a[], int n) {
-    Student best = a[0];
-    /* TODO: compare score first, then smaller id on a tie. */
-    (void)n;
-    return best;
-}
+#include <stdlib.h>
+/* 结构体实战：学生记录管理器
+ * 请按题目要求自行设计结构体、操作函数和 main。
+ * 此兼容模板不自动填入编辑器，也不包含答案。
+ */
 int main(void) {
-    int n; Student a[100];
-    if (scanf("%d", &n) != 1 || n < 1 || n > 100) return 1;
-    for (int i = 0; i < n; ++i)
-        if (scanf("%d%d", &a[i].id, &a[i].score) != 2) return 1;
-    Student best = best_student(a, n);
-    printf("%d %d\n", best.id, best.score);
+    /* TODO: implement the complete program. */
     return 0;
 }
-

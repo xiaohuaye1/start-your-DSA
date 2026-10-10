@@ -8,6 +8,7 @@ from linear_oracles import linear_answer, bracket_answer
 from sorting_oracles import sorting_answer
 from advanced_oracles import LESSONS, advanced_answer
 from final_oracles import LESSONS as FINAL_LESSONS, final_answer
+from workshop_oracles import LESSONS as WORKSHOP_LESSONS, workshop_answer
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -199,6 +200,17 @@ class CoreTests(unittest.TestCase):
                     problem_ids.add(problem.id)
                     self.assertTrue(any(case.sample for case in problem.cases))
                     self.assertTrue(loader.text(lesson, stage.source + "/starter.c"))
+                    if stage.id == "practice" and lesson.id in WORKSHOP_LESSONS:
+                        self.assertEqual(problem.id, lesson.id + ".practice.workshop_v2")
+                        self.assertIn("编辑器仍然从空白", problem.statement)
+                        for case in problem.cases:
+                            # More operations, not larger stress-test data.
+                            self.assertLessEqual(len(case.input.split()), 100)
+                            self.assertTrue(matches(workshop_answer(lesson.id, case.input), case.expected))
+                            if case.sample:
+                                self.assertIn(case.input.strip(), problem.statement)
+                                self.assertIn(case.expected.strip(), problem.statement)
+                        continue
                     for case in problem.cases:
                         if lesson.id == 'linear.stack' and stage.id == 'exam':
                             self.assertLessEqual(len(case.input), 30)
@@ -272,6 +284,32 @@ class CoreTests(unittest.TestCase):
             self.assertIn(key, bridge.completed())
             self.assertTrue(bridge.database.has_accepted_submission("bubble_sort.adjacent_swaps"))
             bridge.database.close()
+
+    def test_workshop_upgrade_preserves_old_records_without_crediting_old_answers(self):
+        from PySide6.QtCore import QCoreApplication
+        from app.bridge import Bridge
+        application = QCoreApplication.instance() or QCoreApplication([])
+        with tempfile.TemporaryDirectory() as temporary:
+            bridge = Bridge(Path(temporary))
+            try:
+                for lesson in WORKSHOP_LESSONS:
+                    old_id = lesson + ".practice"
+                    new_id = lesson + ".practice.workshop_v2"
+                    bridge.database.complete(lesson, "practice")
+                    bridge.database.save_draft(old_id, "C", "/* my previous draft */")
+                    bridge.database.submission(old_id, "C", "AC", "submit", "old answer")
+                    bridge.database.save_note(lesson, "keep my note")
+                    self.assertNotIn((lesson, "practice"), bridge.completed())
+                    data = bridge.call("load_stage", {"lesson": lesson, "stage": "practice", "language": "C"})
+                    self.assertEqual(data["problem"]["id"], new_id)
+                    self.assertEqual(data["draft"], "")
+                    self.assertEqual(data["note"], "keep my note")
+                    self.assertEqual(bridge.database.draft(old_id, "C"), "/* my previous draft */")
+                    self.assertTrue(bridge.database.has_accepted_submission(old_id))
+                    bridge.database.submission(new_id, "C", "AC", "submit", "new answer")
+                    self.assertIn((lesson, "practice"), bridge.completed())
+            finally:
+                bridge.database.close()
 
     def test_checker_whitespace(self):
         self.assertTrue(matches("1 2\r\n3 ", "1\n2 3"))

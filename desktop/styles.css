@@ -1,6 +1,7 @@
 :root {
   color-scheme: dark;
   --bg: #1b1b1b; --panel: #202020; --sidebar: #202020; --raised: #282828;
+  --inspector-width: 218px;
   --border: #353535; --muted: #9b9b9b; --text: #dedede; --amber: #e8b65c;
   --green: #86bb91; --red: #dd9090; --mono: Consolas, 'Cascadia Code', monospace;
   font-family: 'Segoe UI', 'Microsoft YaHei UI', sans-serif; font-size: 13px;
@@ -97,16 +98,10 @@ body.resizing-sidebar, body.resizing-sidebar * { cursor: col-resize !important; 
 .lesson-identity { display: flex; align-items: center; gap: 20px; min-width: 0 }
 .lesson-heading h1 { font-size: 18px; font-weight: 600; white-space: nowrap }
 .breadcrumb { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.animation-tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0 }
-.round-choice { border-left: 1px solid #3b3b3b; padding-left: 8px; margin-left: 4px }
-.round-choice select { border: 0; background: transparent; width: 104px; font-size: 12px; padding: 6px }
-.array-input { display: flex; align-items: center; gap: 9px; font-size: 12px; color: #aaa }
-.array-input input { width: 211px; padding: 7px 10px; font-family: var(--mono); font-size: 12px }
-.array-input #target-input { width: 48px }
 .stage-badge { font-size: 11px; color: #aaa }
 .page { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px }
 .animation-main { flex: 1; min-height: 280px; display: flex; flex-direction: column }
-.animation-workspace { display: flex; flex: 1; min-height: 0 }
+.animation-workspace { position: relative; display: flex; flex: 1; min-height: 0 }
 .array-canvas { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 24px 20px 15px; overflow: hidden; background: #1c1c1c }
 #canvas-message { text-align: center; font-size: 14px; line-height: 1.8; flex-shrink: 0; min-height: 25px; margin: clamp(4px, 3vh, 30px) 0 4px; color: #e0e0e0 }
 .array-scroll { display: flex; align-items: center; flex: 1; min-height: 172px; min-width: 0; overflow-x: auto; overflow-y: hidden; padding: 0 8px }
@@ -188,7 +183,12 @@ body.resizing-sidebar, body.resizing-sidebar * { cursor: col-resize !important; 
 .canvas-legend span { display: flex; align-items: center; gap: 6px }
 .canvas-legend i, .green-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block }
 .amber { background: var(--amber) }.neutral { background: #858585 }.green, .green-dot { background: var(--green) }
-.inspector { width: 218px; flex-shrink: 0; padding: 20px 16px 16px; border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; background: #202020 }
+.inspector { width: var(--inspector-width); flex-shrink: 0; padding: 20px 16px 16px; border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; background: #202020 }
+.inspector-toggle { position: absolute; z-index: 2; right: calc(var(--inspector-width) - 10px); top: 50%; transform: translateY(-50%); width: 20px; height: 38px; padding: 0; display: grid; place-items: center; background: #292929; border: 1px solid #606060; border-radius: 4px; color: #bdbdbd }
+.inspector-toggle svg { width: 12px; height: 16px; stroke-width: 1.6 }
+.inspector-toggle:hover { background: #343434; color: #f0f0f0 }
+.inspector-collapsed .inspector-toggle { right: 0; border-right: 0; border-radius: 4px 0 0 4px }
+.inspector-collapsed .inspector-toggle svg { transform: rotate(180deg) }
 .inspector h2 { font-size: 13px; font-weight: 500 }
 .runtime-section { flex-shrink: 0; border-bottom: 1px solid #3d3d3d; padding-bottom: 17px }
 .variable-list { display: flex; flex-direction: column; gap: 12px; padding: 18px 0 0 }
@@ -206,24 +206,20 @@ body.resizing-sidebar, body.resizing-sidebar * { cursor: col-resize !important; 
 .operation-row.current .operation-number { color: #292217; border-color: var(--amber); background: var(--amber) }
 .operation-totals { border-top: 1px solid #3d3d3d; padding-top: 16px; display: flex; gap: 13px; flex-wrap: wrap; font-size: 11px; flex-shrink: 0; color: #b5b5b5 }
 .operation-totals b { color: var(--amber); font-family: var(--mono); font-weight: 400 }
-.playback { display: flex; align-items: center; gap: 24px; min-height: 64px; padding: 12px 18px; background: #242424; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); flex-shrink: 0 }
-.playback-buttons { display: flex; gap: 7px; flex-shrink: 0 }
+.playback-buttons { display: flex; justify-content: center; align-items: center; gap: 26px; margin: 10px 0 14px; flex-shrink: 0 }
+.playback-control { width: 44px; height: 44px; padding: 10px; display: grid; place-items: center; background: transparent; border: 0; border-radius: 0; box-shadow: none; color: #eaeaea }
+.playback-control svg { width: 24px; height: 24px; fill: currentColor; stroke-width: 1; pointer-events: none }
+.playback-control:hover:not(:disabled) { color: #fff }
+.playback-control:disabled { opacity: .3 }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #3e3e3e; border-radius: 4px; background: #292929; color: #ddd; padding: 8px 14px; font-size: 12px; white-space: nowrap; transition: background .15s }
 .button:hover:not(:disabled) { background: #373737; border-color: #555 }
 .button svg { width: 15px; height: 15px }
 .button.primary { color: #f5f5f5; background: #3a3a3a; border-color: #535353 }
 .button.primary:hover:not(:disabled) { background: #484848 }
-#play { min-width: 95px }
-#play svg { fill: currentColor; stroke-width: 1.4 }
 .button.compact { font-size: 12px; padding: 7px 10px }
 .button.icon-button { padding: 8px 11px }
 .button.danger { color: #dba1a1; border-color: #644646; background: #382929 }
 .button.full { width: 100% }
-.timeline { flex: 1; min-width: 55px; display: flex; align-items: center }
-input[type=range] { appearance: none; padding: 0; width: 100%; height: 6px; border: 1px solid #404040; border-radius: 5px; background: #363636; accent-color: var(--amber); cursor: pointer }
-input[type=range]::-webkit-slider-thumb { appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--amber) }
-.speed-control { flex-shrink: 0 }
-.speed-control select { width: 82px; padding: 8px; font-family: var(--mono); font-size: 12px; background: #292929 }
 .auxiliary { height: 190px; flex-shrink: 0; margin: 0 8px 7px; border: 1px solid var(--border); border-radius: 4px; background: #202020; overflow: hidden; display: flex; flex-direction: column }
 .panel-tabs { height: 38px; display: flex; align-items: stretch; border-bottom: 1px solid var(--border); background: #252525; flex-shrink: 0 }
 .panel-tabs button { background: transparent; padding: 0 17px; color: #aaa; font-size: 12px; position: relative; display: flex; align-items: center; gap: 7px; white-space: nowrap }
@@ -315,18 +311,16 @@ dialog > label { display: block; font-size: 11px; color: #bbb; margin-bottom: 16
 ::-webkit-scrollbar { width: 6px; height: 6px }::-webkit-scrollbar-thumb { background: #484848; border-radius: 4px }::-webkit-scrollbar-track { background: transparent }
 @media (max-width: 1350px) {
   .lesson-heading .breadcrumb { display: none }
-  .sidebar { width: 210px }.inspector { width: 200px; padding-left: 13px; padding-right: 13px }
-  .lesson-heading { padding-left: 14px; padding-right: 12px }.animation-tools { gap: 6px }
-  .array-input input { width: 190px }.array-input { gap: 7px }
-  .aux-detail-grid { gap: 18px; padding: 17px 20px }.playback { gap: 19px }
+  :root { --inspector-width: 200px }
+  .sidebar { width: 210px }.inspector { padding-left: 13px; padding-right: 13px }
+  .lesson-heading { padding-left: 14px; padding-right: 12px }
+  .aux-detail-grid { gap: 18px; padding: 17px 20px }
 }
 @media (max-width: 1120px) {
   .sidebar { width: 195px }.activity-rail { width: 49px }.activity-rail button { width: 38px }
-  .inspector { width: 178px; padding: 15px 11px }.inspector h2 { font-size: 12px }
-  .array-input > span { display: none }.array-input input { width: 170px }
-  .round-choice select { width: 90px; font-size: 11px }.animation-tools .button { padding: 7px 8px; font-size: 11px }
-  .playback { padding: 11px 13px; gap: 13px }.playback .button { padding: 8px 11px }
-  #play { min-width: 77px }.speed-control select { width: 74px }
+  :root { --inspector-width: 178px }
+  .inspector { padding: 15px 11px }.inspector h2 { font-size: 12px }
+  .playback-buttons { gap: 22px }
   .save-indicator { display: none }.run-actions .button { padding: 7px 8px; font-size: 11px }
   .statusbar .shortcuts { display: none }.status-language { margin-left: auto }
 }
@@ -338,7 +332,7 @@ dialog > label { display: block; font-size: 11px; color: #bbb; margin-bottom: 16
   .interval-row { margin: 3px 0; padding: 1px; font-size: 9px; line-height: 1.25 }
   .auxiliary { height: 164px }.output-panel { height: 175px }
   .array-canvas { padding-top: 8px; padding-bottom: 10px }#canvas-message { margin-top: 8px; font-size: 13px }
-  .array-scroll { min-height: 155px }.playback { min-height: 57px; padding-top: 9px; padding-bottom: 9px }
+  .array-scroll { min-height: 155px }.playback-buttons { margin: 5px 0 8px }
   .inspector { padding-top: 14px; padding-bottom: 12px }.variable-list { gap: 8px; padding-top: 11px }
   .runtime-section { padding-bottom: 12px }.operations-section { padding-top: 12px }.inspector-heading { margin-bottom: 8px }
   .operation-row { padding-top: 5px; padding-bottom: 5px }.operation-totals { padding-top: 10px }

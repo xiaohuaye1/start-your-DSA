@@ -1,37 +1,52 @@
 #include <stdio.h>
-typedef struct Queue { int data[100], front, rear, count, capacity; } Queue;
-int q_push(Queue *q, int value) {
-    if (q->count == q->capacity) return 0;
-    q->data[q->rear] = value;
-    q->rear = (q->rear + 1) % q->capacity; ++q->count;
+#define MAX 7
+typedef struct { int data[MAX], front, rear, capacity; } Queue;
+
+void queueinit(Queue *Q, int capacity) {
+    Q->front = Q->rear = 0; Q->capacity = capacity;
+}
+int isempty(const Queue *Q) { return Q->front == Q->rear; }
+int isfull(const Queue *Q) { return (Q->rear + 1) % Q->capacity == Q->front; }
+int size(const Queue *Q) { return (Q->rear - Q->front + Q->capacity) % Q->capacity; }
+int q_push(Queue *Q, int e) {
+    if (isfull(Q)) return 0;
+    Q->data[Q->rear] = e; Q->rear = (Q->rear + 1) % Q->capacity;
     return 1;
 }
-int q_pop(Queue *q, int *value) {
-    if (!q->count) return 0;
-    *value = q->data[q->front];
-    q->front = (q->front + 1) % q->capacity; --q->count;
+int q_pop(Queue *Q, int *e) {
+    if (isempty(Q)) return 0;
+    *e = Q->data[Q->front]; Q->front = (Q->front + 1) % Q->capacity;
     return 1;
 }
-int q_peek(const Queue *q, int *value) {
-    if (!q->count) return 0;
-    *value = q->data[q->front]; return 1;
+int front_value(const Queue *Q, int *e) {
+    if (isempty(Q)) return 0;
+    *e = Q->data[Q->front]; return 1;
+}
+void clear(Queue *Q) { Q->front = Q->rear = 0; }
+void listElem(const Queue *Q) {
+    int count = size(Q);
+    if (!count) { puts("EMPTY"); return; }
+    for (int i = 0; i < count; ++i)
+        printf("%d%c", Q->data[(Q->front + i) % Q->capacity], i + 1 == count ? '\n' : ' ');
 }
 int main(void) {
-    int capacity, operations;
-    if (scanf("%d%d", &capacity, &operations) != 2 || capacity < 1 || capacity > 100 ||
-        operations < 1 || operations > 100) return 1;
-    Queue q = {{0}, 0, 0, 0, capacity};
-    for (int i = 0; i < operations; ++i) {
-        int op, value;
+    int capacity, q, op, e;
+    Queue Q;
+    if (scanf("%d%d", &capacity, &q) != 2 || capacity < 2 || capacity > MAX || q < 1 || q > 16) return 1;
+    queueinit(&Q, capacity);
+    for (int i = 0; i < q; ++i) {
         if (scanf("%d", &op) != 1) return 1;
         if (op == 1) {
-            if (scanf("%d", &value) != 1) return 1;
-            if (!q_push(&q, value)) puts("FULL");
+            if (scanf("%d", &e) != 1) return 1;
+            puts(q_push(&Q, e) ? "OK" : "FULL");
         } else if (op == 2 || op == 3) {
-            int ok = op == 2 ? q_pop(&q, &value) : q_peek(&q, &value);
-            if (ok) printf("%d\n", value); else puts("EMPTY");
-        } else return 1;
+            int found = op == 2 ? q_pop(&Q, &e) : front_value(&Q, &e);
+            if (found) printf("%d\n", e); else puts("EMPTY");
+        } else if (op == 4) printf("%d\n", size(&Q));
+        else if (op == 5) listElem(&Q);
+        else if (op == 6) { clear(&Q); puts("OK"); }
+        else if (op == 7) printf("%d %d\n", Q.front, Q.rear);
+        else return 1;
     }
     return 0;
 }
-

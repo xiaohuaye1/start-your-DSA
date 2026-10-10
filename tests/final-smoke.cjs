@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
+const { seekStep, finishAnimation, seekPhase } = require('./animation-actions.cjs');
 const lessons = [
   ['advanced.hash_table','哈希表','hash_table','P3370'],
   ['advanced.greedy','贪心算法','greedy_intervals','P1803'],
@@ -60,13 +61,13 @@ async function main() {
         assert.equal(await page.locator('#array-state b').nth(1).innerText(), '·');
       }
       const phases = {hash_table:'删除与标记',greedy_intervals:'选择活动',knapsack_01:'逆序更新容量',optimal_merge:'合并与累计'};
-      await page.locator('#round-select').selectOption({ label: phases[source] });
+      await seekPhase(page, phases[source]);
       if (source === 'optimal_merge') {
         assert.equal(await page.locator('.structure-diagram').count(), 1);
         assert.ok(await page.locator('.structure-node').count() > 0);
       }
       await capture(app, root, `lesson-${source}.png`);
-      await page.locator('#timeline').evaluate(element => { element.value = element.max; element.dispatchEvent(new Event('input')); });
+      await finishAnimation(page);
       await page.waitForFunction(expected => document.getElementById('progress-count').textContent === expected, `${index * 3 + 1} / 84`);
       await page.locator('[data-panel="mindmap"]').click();
       assert.match(await page.locator('#knowledge-tree').innerText(), new RegExp(title));
@@ -107,28 +108,23 @@ async function main() {
     await page.locator('[data-stage="animation"]').click();
     await page.locator('#animation-page').waitFor({ state: 'visible' });
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1060, 740));
-    await page.locator('#array-input').fill('1, 2, 3, 4, 5, 6, 7, 8');
-    await page.locator('#generate').click();
-    assert.equal(await page.locator('.array-cell').count(), 8);
+    assert.ok(await page.locator('.array-cell').count() > 0 && await page.locator('.array-cell').count() <= 8);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.ok(await page.locator('#concept-scene').evaluate(element => element.clientHeight) >= 50);
     await capture(app, root, 'final-small.png');
-    await page.locator('#array-input').fill('1,2,3,4,5,6,7,8,9'); await page.locator('#generate').click();
-    await page.locator('#toast').filter({ hasText: '1～8' }).waitFor();
-    assert.equal(await page.locator('.array-cell').count(), 8);
+    assert.equal(await page.locator('#array-input, #generate').count(), 0);
     assert.deepEqual(errors, []);
     for (const [lesson,,source] of lessons) {
       await page.locator('.lesson-link[data-lesson="'+lesson+'"]').click();
       await page.waitForFunction(source=>document.getElementById('array-canvas').dataset.demo===source,source);
-      await page.locator('#array-input').fill('1,2,3,4,5,6,7,8'); await page.locator('#generate').click();
-      await page.waitForFunction(()=>document.querySelectorAll('.array-cell').length===8);
-      await page.locator('#timeline').evaluate(e=>{e.value=e.max;e.dispatchEvent(new Event('input'));});
-      await page.waitForFunction(()=>document.getElementById('round-select').selectedOptions[0].textContent==='演示完成');
+      await page.waitForFunction(()=>document.querySelectorAll('.array-cell').length>0);
+      await finishAnimation(page);
+      await page.waitForFunction(()=>document.getElementById('next').disabled);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       assert.ok(await page.locator('#concept-scene').evaluate(e=>e.clientHeight)>=50);
       assert.equal(await page.locator('#array-scroll').evaluate(e=>getComputedStyle(e).display),'none');
       if(source==='hash_table')assert.equal(await page.locator('.hash-slot').count(),11);
-      if(source==='greedy_intervals')assert.equal(await page.locator('.interval-row').count(),8);
+      if(source==='greedy_intervals')assert.ok(await page.locator('.interval-row').count()>0 && await page.locator('.interval-row').count()<=8);
       if(source==='knapsack_01') {
         assert.equal(await page.locator('.dp-board span').count(),24);
         assert.equal(await page.locator('.dp-board').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
@@ -136,8 +132,6 @@ async function main() {
       if(source==='optimal_merge')assert.equal(await page.locator('.structure-node').count(),1);
       await capture(app,root,'final-small-'+source+'.png');
     }
-    await page.locator('#array-input').fill('0,1'); await page.locator('#generate').click();
-    await page.locator('#toast').filter({hasText:'须为正整数'}).waitFor();
     assert.equal(await page.locator('.structure-node').count(),1);
     assert.deepEqual(errors, []);
     console.log('第25～28节实际界面全部通过：播放快照、回退、独立笔记与草稿、原题入口、84环节进度、小窗口、原始输出。');

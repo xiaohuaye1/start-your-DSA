@@ -1,24 +1,25 @@
 {
-  "id": "linear.circular_queue.practice",
-  "title": "循环队列操作命令",
+  "id": "linear.circular_queue.practice.workshop_v2",
+  "title": "循环队列实战：空槽法与下标回绕",
   "time_limit_ms": 2000,
   "cases": [
     {
-      "name": "case-1",
-      "input": "3 8\n1 4\n1 2\n1 7\n1 9\n2\n1 5\n3\n2\n",
-      "expected": "FULL\n4\n2\n2\n",
+      "name": "保留空槽、下标回绕和满队列",
+      "input": "4 12\n1 10\n1 20\n1 30\n1 40\n2\n2\n1 40\n1 50\n7\n5\n3\n4\n",
+      "expected": "OK\nOK\nOK\nFULL\n10\n20\nOK\nOK\n2 1\n30 40 50\n30\n3\n",
       "sample": true
     },
     {
-      "name": "case-2",
-      "input": "2 7\n1 3\n1 6\n2\n2\n2\n1 8\n3\n",
-      "expected": "3\n6\nEMPTY\n8\n"
+      "name": "数字零不表示出队失败",
+      "input": "3 9\n2\n1 0\n3\n1 8\n1 9\n2\n1 7\n7\n5\n",
+      "expected": "EMPTY\nOK\n0\nOK\nFULL\n0\nOK\n1 0\n8 7\n",
+      "sample": false
     },
     {
-      "name": "case-3",
-      "input": "3 8\n1 5\n1 1\n2\n1 4\n1 2\n2\n2\n3\n",
-      "expected": "5\n1\n4\n2\n"
+      "name": "回绕后清空再复用",
+      "input": "3 11\n1 1\n1 2\n2\n1 3\n7\n6\n7\n1 4\n1 5\n5\n4\n",
+      "expected": "OK\nOK\n1\nOK\n1 0\nOK\n0 0\nOK\nOK\n4 5\n2\n",
+      "sample": false
     }
   ]
 }
-

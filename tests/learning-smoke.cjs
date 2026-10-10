@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
+const { seekStep, finishAnimation, seekPhase } = require('./animation-actions.cjs');
 const lessons = [
   ['intro.algorithm_complexity', '算法与复杂度', 'linear_sum', 'P1001'],
   ['intro.data_structures', '数据结构简介', 'stack_intro', 'P1427'],
@@ -58,7 +59,7 @@ async function main() {
       assert.equal(await page.locator('#variables').innerText(), initial);
       await page.locator('#next').click();
       await capture(app, root, `lesson-${source}.png`);
-      await page.locator('#timeline').evaluate(element => { element.value = element.max; element.dispatchEvent(new Event('input')); });
+      await finishAnimation(page);
       await page.waitForFunction(expected => document.getElementById('progress-count').textContent === expected, `${index * 3 + 1} / 84`);
       await page.locator('[data-panel="mindmap"]').click();
       assert.match(await page.locator('#knowledge-tree').innerText(), new RegExp(title));
@@ -99,15 +100,11 @@ async function main() {
     await page.locator('[data-stage="animation"]').click();
     await page.locator('#animation-page').waitFor({ state: 'visible' });
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1060, 740));
-    await page.locator('#array-input').fill('1, 2, 3, 4, 5, 6, 7, 8');
-    await page.locator('#generate').click();
-    assert.equal(await page.locator('.array-cell').count(), 8);
+    assert.ok(await page.locator('.array-cell').count() > 0 && await page.locator('.array-cell').count() <= 8);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.ok(await page.locator('#concept-scene').evaluate(element => element.clientHeight) >= 50);
     await capture(app, root, 'learning-small.png');
-    await page.locator('#array-input').fill('1,2,3,4,5,6,7,8,9'); await page.locator('#generate').click();
-    await page.locator('#toast').filter({ hasText: '1～8' }).waitFor();
-    assert.equal(await page.locator('.array-cell').count(), 8);
+    assert.equal(await page.locator('#array-input, #generate').count(), 0);
     assert.deepEqual(errors, []);
     console.log('前五节实际界面全部通过：播放快照、回退、独立笔记与草稿、原题入口、84环节进度、小窗口、原始输出。');
   } catch (error) {

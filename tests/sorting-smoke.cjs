@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
+const { seekStep, finishAnimation, seekPhase } = require('./animation-actions.cjs');
 const lessons = [
   ['linear.circular_queue', '循环队列', 'ring_queue', 'P1996'],
   ['sorting.overview', '排序算法概述', 'sorting_overview', 'P1059'],
@@ -62,9 +63,9 @@ async function main() {
       }
       const phases = { ring_queue: '满队列检查', sorting_overview: '稳定性对照 · 选择',
         selection_sort: '第 1 轮归位', insertion_sort: '第 1 次插入', quick_sort: '保存子问题' };
-      await page.locator('#round-select').selectOption({ label: phases[source] });
+      await seekPhase(page, phases[source]);
       await capture(app, root, `lesson-${source}.png`);
-      await page.locator('#timeline').evaluate(element => { element.value = element.max; element.dispatchEvent(new Event('input')); });
+      await finishAnimation(page);
       await page.waitForFunction(expected => document.getElementById('progress-count').textContent === expected, `${index * 3 + 1} / 84`);
       await page.locator('[data-panel="mindmap"]').click();
       assert.match(await page.locator('#knowledge-tree').innerText(), new RegExp(title));
@@ -105,15 +106,11 @@ async function main() {
     await page.locator('[data-stage="animation"]').click();
     await page.locator('#animation-page').waitFor({ state: 'visible' });
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1060, 740));
-    await page.locator('#array-input').fill('1, 2, 3, 4, 5, 6, 7, 8');
-    await page.locator('#generate').click();
-    assert.equal(await page.locator('.array-cell').count(), 8);
+    assert.ok(await page.locator('.array-cell').count() > 0 && await page.locator('.array-cell').count() <= 8);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.ok(await page.locator('#concept-scene').evaluate(element => element.clientHeight) >= 50);
     await capture(app, root, 'sorting-small.png');
-    await page.locator('#array-input').fill('1,2,3,4,5,6,7,8,9'); await page.locator('#generate').click();
-    await page.locator('#toast').filter({ hasText: '1～8' }).waitFor();
-    assert.equal(await page.locator('.array-cell').count(), 8);
+    assert.equal(await page.locator('#array-input, #generate').count(), 0);
     assert.deepEqual(errors, []);
     console.log('循环队列及四节排序课程实际界面全部通过：播放快照、回退、独立笔记与草稿、原题入口、84环节进度、小窗口、原始输出。');
   } catch (error) {

@@ -1,24 +1,25 @@
 {
-  "id": "linear.stack.practice",
-  "title": "实现栈的三个操作",
+  "id": "linear.stack.practice.workshop_v2",
+  "title": "栈实战：有容量限制的完整 ADT",
   "time_limit_ms": 2000,
   "cases": [
     {
-      "name": "样例：基础用例",
-      "input": "7\n1 3\n1 5\n3\n2\n1 7\n2\n3\n",
-      "expected": "5\n5\n7\n3\n",
+      "name": "满栈、查看和出栈",
+      "input": "3 11\n1 2\n1 0\n1 5\n1 9\n3\n2\n4\n6\n2\n2\n2\n",
+      "expected": "OK\nOK\nOK\nFULL\n5\n5\n2\n2 0\n0\n2\nEMPTY\n",
       "sample": true
     },
     {
-      "name": "普通用例 2",
-      "input": "8\n1 2\n1 4\n1 6\n2\n3\n2\n1 8\n3\n",
-      "expected": "6\n4\n4\n8\n"
+      "name": "查看不会弹出元素",
+      "input": "2 8\n3\n1 -3\n3\n3\n4\n2\n4\n6\n",
+      "expected": "EMPTY\nOK\n-3\n-3\n1\n-3\n0\nEMPTY\n",
+      "sample": false
     },
     {
-      "name": "普通用例 3",
-      "input": "6\n1 7\n1 3\n2\n1 5\n3\n2\n",
-      "expected": "3\n5\n5\n"
+      "name": "清空后可以复用",
+      "input": "2 8\n1 7\n1 8\n5\n4\n2\n1 0\n6\n2\n",
+      "expected": "OK\nOK\nOK\n0\nEMPTY\nOK\n0\n0\n",
+      "sample": false
     }
   ]
 }
-

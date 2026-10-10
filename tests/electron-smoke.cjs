@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
+const { seekStep, finishAnimation, seekPhase } = require('./animation-actions.cjs');
 
 async function screenshot(application, root, filename) {
   // A first capture wakes the hidden page's compositor; the second gets its updated frame.
@@ -50,7 +51,7 @@ async function main() {
     assert.equal(await page.locator('#swap-count').innerText(), '0');
     await fs.mkdir(path.join(root, 'test-results'), { recursive: true });
     await screenshot(application, root, 'graphite-animation.png');
-    await page.locator('#reset-view').click();
+    await seekStep(page, 0);
     await page.locator('#next').click(); await page.locator('#next').click();
     await page.waitForFunction(() => document.getElementById('action-title').textContent === '交换元素');
     await page.waitForTimeout(450);
@@ -64,18 +65,16 @@ async function main() {
     assert.equal(await page.locator('#swap-count').innerText(), '0');
     await page.locator('.operation-row[data-step="2"]').click();
     assert.equal(await page.locator('#swap-count').innerText(), '1');
-    await page.locator('#round-select').selectOption({ label: '第 2 轮' });
+    await seekPhase(page, '第 2 轮 · 比较相邻元素');
     assert.equal(await page.locator('.variable-row').first().locator('b').innerText(), '1');
     assert.ok(Number(await page.locator('#compare-count').innerText()) > 1);
-    await page.locator('#reset-view').click();
+    await seekStep(page, 0);
     assert.equal(await page.locator('#compare-count').innerText(), '0');
     assert.equal(await page.locator('#swap-count').innerText(), '0');
-    await page.locator('#speed').selectOption('150');
     await page.locator('#play').click();
-    await page.waitForFunction(() => Number(document.getElementById('timeline').value) > 0);
+    await page.waitForFunction(() => Number(document.getElementById('array-canvas').dataset.step) > 0);
     await page.locator('#play').click();
-    assert.equal(await page.locator('#play').innerText(), '播放');
-    await page.locator('#speed').selectOption('100');
+    assert.equal(await page.locator('#play').getAttribute('aria-label'), '播放');
     await page.locator('[data-aux="state"]').click();
     assert.equal(await page.locator('#aux-state .array-state-column').count(), 8);
     await page.locator('[data-aux="explanation"]').click();
@@ -88,9 +87,9 @@ async function main() {
     assert.equal(await page.locator('.lesson-link').count(), 1);
     assert.equal(await page.locator('.lesson-link').isDisabled(), false);
     await page.locator('#course-search').fill('');
-    await page.locator('#array-input').fill('3, 2, 1'); await page.locator('#generate').click();
-    assert.equal(await page.locator('.array-cell').count(), 3);
-    await page.locator('#timeline').evaluate(element => { element.value = element.max; element.dispatchEvent(new Event('input')); });
+    await seekStep(page, 0);
+    assert.equal(await page.locator('.array-cell').count(), 8);
+    await finishAnimation(page);
     await page.waitForFunction(() => document.getElementById('progress-count').textContent === '1 / 84');
     await page.locator('[data-panel="notes"]').click();
     await page.locator('#notes').fill('JavaScript 界面测试笔记');
@@ -175,11 +174,7 @@ async function main() {
       return pane.right <= window.innerWidth && footer.bottom <= window.innerHeight;
     });
     assert.equal(withinWindow, true, '运行状态与底栏不能超出最小窗口');
-    await page.locator('#array-input').fill(Array(16).fill('-99999').join(', '));
-    await page.locator('#generate').click();
-    assert.equal(await page.locator('.array-cell').count(), 16);
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false,
-      '长数组应在画布内滚动，不能撑开整个窗口');
+    assert.equal(await page.locator('#array-input, #generate').count(), 0);
     await page.locator('[data-stage="practice"]').click();
     await page.locator('#practice-page').waitFor({ state: 'visible' });
     const editorBox = await page.locator('#code-editor').boundingBox();

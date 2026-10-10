@@ -1,5 +1,5 @@
-import { bubbleSteps, binarySteps, parseArray } from './algorithms.js';
-import { learningDemos, learningSteps, parseLearningInput, lessonDemo } from './learning-demos.js';
+import { bubbleSteps, binarySteps } from './algorithms.js';
+import { learningDemos, learningSteps, lessonDemo } from './learning-demos.js';
 import { renderStructure } from './structure-scenes.js';
 import { createSidebarResizer } from './sidebar-resizer.js';
 
@@ -216,7 +216,6 @@ async function loadStage(lesson, stage, options = {}) {
       $('lesson-title').textContent = current.title;
       const chapter = courseOutline.find(group => group.lessons.includes(current.title));
       $('breadcrumb').textContent = `${chapter?.title || '课程'}  /  ${current.title}  /  ${current.stage.title}`;
-      $('animation-tools').hidden = current.stage.kind !== 'animation';
       $('stage-badge').hidden = current.stage.kind === 'animation';
       $('stage-badge').textContent = current.stage.kind === 'animation' ? '可视化学习' : current.stage.kind === 'practice' ? '动手编程' : '知识拓展';
       for (const page of ['animation', 'practice']) $(page + '-page').hidden = current.stage.kind !== page;
@@ -229,16 +228,11 @@ async function loadStage(lesson, stage, options = {}) {
         const demo = learningDemos[current.stage.source];
         $('array-canvas').classList.toggle('learning-mode', Boolean(demo));
         $('concept-scene').hidden = !demo;
-        $('animation-input-label').textContent = demo?.inputLabel || '初始数组';
-        $('generate').textContent = demo ? '生成演示' : '生成数组';
-        $('array-input').placeholder = demo ? demo.positiveOnly ? '1～8 个正整数' : '1～8 个整数' : '1～16 个整数';
         $('counter-one-label').textContent = demo?.counters[0] || '比较';
         $('counter-two-label').textContent = demo?.counters[1] || '交换';
         $('legend-active').textContent = demo ? '当前操作' : '当前比较';
         $('legend-complete').textContent = demo ? '已处理' : '已归位';
         markdown($('aux-explanation'), current.markdown);
-        $('target-input').hidden = current.stage.source !== 'binary_search';
-        $('array-input').value = demo ? demo.defaults.join(', ') : current.stage.source === 'binary_search' ? '1, 2, 3, 4, 5, 6, 7, 8' : '5, 2, 8, 1, 6, 3, 7, 4';
         generate();
       } else if (current.stage.kind === 'practice') {
         const writingNote = '> 请自行编写完整程序（包含 main 和输入输出）。编辑器不自动填入代码；题目中的“补全”指需要实现的功能，“参考代码”可单独查看。\n\n';
@@ -287,61 +281,53 @@ function updateKnowledgeTree() {
 function generate() {
   $('array-canvas').dataset.demo = current.stage.source;
   const demo = learningDemos[current.stage.source];
-  const values = demo ? parseLearningInput(current.stage.source, $('array-input').value) : parseArray($('array-input').value);
-  let generated;
-  if (demo) generated = learningSteps(current.stage.source, values);
-  else if (current.stage.source === 'binary_search') {
-    const target = Number($('target-input').value);
-    if (!Number.isSafeInteger(target)) throw new Error('目标值必须为整数。');
-    generated = binarySteps(values, target);
-  } else generated = bubbleSteps(values);
+  const values = demo ? [...demo.defaults] : current.stage.source === 'binary_search'
+    ? [1, 2, 3, 4, 5, 6, 7, 8] : [5, 2, 8, 1, 6, 3, 7, 4];
+  const generated = demo ? learningSteps(current.stage.source, values)
+    : current.stage.source === 'binary_search' ? binarySteps(values, 6) : bubbleSteps(values);
   pause(); steps = generated; stepIndex = 0; cellOrder = [];
-  $('timeline').max = steps.length - 1;
-  buildRoundOptions(); renderStep(false);
-}
-
-function buildRoundOptions() {
-  const options = [new Option('初始状态', '0')];
-  const seen = new Set();
-  for (let index = 1; index < steps.length - 1; index++) {
-    const step = steps[index];
-    if (learningDemos[current.stage.source]) {
-      if (step.phase && !seen.has(step.phase)) {
-        seen.add(step.phase); options.push(new Option(step.phase, String(index)));
-      }
-      continue;
-    }
-    if (step.action !== 'compare') continue;
-    const round = current.stage.source === 'binary_search' ? index : step.variables.i;
-    if (seen.has(round)) continue;
-    seen.add(round);
-    options.push(new Option(`第 ${seen.size} ${current.stage.source === 'binary_search' ? '步' : '轮'}`, String(index)));
-  }
-  options.push(new Option('演示完成', String(steps.length - 1)));
-  $('round-select').replaceChildren(...options);
+  renderStep(false);
 }
 
 function pause() {
   clearTimeout(playTimer); playTimer = null;
-  $('play').replaceChildren(icon('play'), textElement('span', '播放'));
+  $('play').replaceChildren(icon('play'));
+  $('play').setAttribute('aria-label', '播放');
+  $('play').setAttribute('aria-pressed', 'false');
+  $('play').title = '播放';
 }
 
 function schedulePlay() {
   playTimer = setTimeout(() => {
     if (stepIndex < steps.length - 1) { stepIndex++; renderStep(true); }
     if (stepIndex < steps.length - 1) schedulePlay(); else pause();
-  }, 950 / (Number($('speed').value) / 100));
+  }, 950);
 }
 
 function togglePlay() {
+  if (!steps.length || loading || closing || current?.stage.kind !== 'animation') return;
   if (playTimer) { pause(); return; }
   if (stepIndex === steps.length - 1) { stepIndex = 0; cellOrder = []; renderStep(false); }
-  $('play').replaceChildren(icon('pause'), textElement('span', '暂停'));
+  $('play').replaceChildren(icon('pause'));
+  $('play').setAttribute('aria-label', '暂停');
+  $('play').setAttribute('aria-pressed', 'true');
+  $('play').title = '暂停';
   schedulePlay();
 }
 
 function seek(index, animate = false) {
+  if (!steps.length || loading || closing || current?.stage.kind !== 'animation') return;
   pause(); stepIndex = Math.min(Math.max(index, 0), steps.length - 1); renderStep(animate);
+}
+
+function toggleInspector() {
+  const collapsed = !$('animation-inspector').hidden;
+  $('animation-inspector').hidden = collapsed;
+  document.querySelector('.animation-workspace').classList.toggle('inspector-collapsed', collapsed);
+  const label = collapsed ? '展开运行状态栏' : '收起运行状态栏';
+  $('inspector-toggle').setAttribute('aria-expanded', String(!collapsed));
+  $('inspector-toggle').setAttribute('aria-label', label);
+  $('inspector-toggle').title = label;
 }
 
 function positionCells(step) {
@@ -412,17 +398,15 @@ function renderStep(animate) {
       cellAnimations.push(cell.animate([
         { transform: `translate(${dx}px,0)` }, { transform: `translate(${dx / 2}px,${dx > 0 ? -23 : 23}px)` },
         { transform: 'translate(0,0)' },
-      ], { duration: 400 / (Number($('speed').value) / 100), easing: 'cubic-bezier(.4,0,.2,1)' }));
+      ], { duration: 400, easing: 'cubic-bezier(.4,0,.2,1)' }));
     }
   }
-  $('round-label').textContent = demo ? step.phase : step.action === 'start' || step.action === 'done' ? actionNames[step.action]
+  $('array-canvas').dataset.step = String(stepIndex);
+  $('array-canvas').dataset.totalSteps = String(steps.length);
+  $('array-canvas').dataset.phase = demo ? step.phase || '' : step.action === 'start' || step.action === 'done' ? actionNames[step.action]
     : `${current.stage.source === 'binary_search' ? '区间查找' : `第 ${step.variables.i + 1} 轮`} · ${actionNames[step.action]}`;
   $('step-count').textContent = `${String(stepIndex + 1).padStart(2, '0')} / ${steps.length}`;
   $('canvas-message').textContent = step.explanation;
-  for (const option of $('round-select').options) {
-    if (Number(option.value) <= stepIndex) $('round-select').value = option.value;
-  }
-  $('timeline').value = stepIndex;
   $('previous').disabled = stepIndex === 0; $('next').disabled = stepIndex === steps.length - 1;
   $('variables').replaceChildren(...Object.entries(step.variables).map(([key, value]) => {
     const row = textElement('div', '', 'variable-row');
@@ -434,7 +418,7 @@ function renderStep(animate) {
   $('action-title').textContent = step.label || learningActionNames[step.action] || actionNames[step.action] || step.action;
   $('step-explanation').textContent = step.explanation;
   $('step-tip').textContent = step.action === 'swap' ? '一次相邻交换，会减少多少个逆序对？'
-    : step.action === 'done' ? '试试重复值、负数或已经有序的数组。' : '为什么每一轮可以少比较一个元素？';
+    : step.action === 'done' ? '演示完成。点击播放可从头重播，也可以回退查看关键步骤。' : '为什么每一轮可以少比较一个元素？';
   $('flow-caption').textContent = current.stage.source === 'binary_search' ? '每次排除一半的候选区间' : '较大的元素逐步向右移动';
   if (current.stage.source === 'binary_search') $('step-tip').textContent = '比较中点后，哪一半区间可以排除？';
   if (demo) {
@@ -820,19 +804,10 @@ function attachEvents() {
       items[next]?.focus();
     }
   });
-  $('generate').addEventListener('click', guard(generate));
-  $('array-input').addEventListener('keydown', event => { if (event.key === 'Enter') guard(generate)(); });
   $('play').addEventListener('click', togglePlay);
   $('previous').addEventListener('click', () => seek(stepIndex - 1));
   $('next').addEventListener('click', () => seek(stepIndex + 1, true));
-  $('reset').addEventListener('click', () => seek(0));
-  $('reset-view').addEventListener('click', () => seek(0));
-  $('round-select').addEventListener('change', () => seek(Number($('round-select').value)));
-  $('timeline').addEventListener('input', () => seek(Number($('timeline').value)));
-  $('speed').addEventListener('input', () => {
-    if (playTimer) { clearTimeout(playTimer); schedulePlay(); }
-  });
-  $('speed').addEventListener('change', guard(() => api.saveSettings({ speed: Number($('speed').value) })));
+  $('inspector-toggle').addEventListener('click', toggleInspector);
   $('language').addEventListener('change', guard(() => loadStage(current.lesson, current.stage.id, { language: $('language').value })));
   $('run').addEventListener('click', guard(() => runJudge('sample')));
   $('submit').addEventListener('click', guard(() => runJudge('submit')));
@@ -902,7 +877,6 @@ async function start() {
   updateProgress(bootstrap.completed);
   $('data-directory').textContent = bootstrap.dataDirectory;
   $('connection-label').textContent = '本地判题已连接';
-  $('speed').value = bootstrap.settings.speed || 100;
   const lesson = bootstrap.lessons.find(lesson => lesson.id === bootstrap.settings.last_lesson) || bootstrap.lessons[0];
   const stage = lesson.stages.find(stage => stage.id === bootstrap.settings.last_stage) || lesson.stages[0];
   await loadStage(lesson.id, stage.id);

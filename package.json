@@ -1,6 +1,6 @@
 {
   "name": "start-your-dsa-desktop",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "private": true,
   "description": "JavaScript 桌面界面 + Python 本地判题",
   "type": "module",
@@ -8,6 +8,7 @@
   "scripts": {
     "test": "node --test tests/javascript.test.mjs tests/advanced.test.mjs tests/final.test.mjs tests/layout.test.mjs",
     "test:desktop": "node tests/electron-smoke.cjs",
+    "test:layout": "node tests/animation-layout-smoke.cjs",
     "pack:win": "node packaging/build.cjs"
   },
   "dependencies": {

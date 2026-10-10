@@ -20,7 +20,7 @@ GCC 15.2.0 / x64 / POSIX / SEH / UCRT，其他发行版需要调整文件清单�
 
 生成文件在 `release/`：
 
-- `Start-Your-DSA-0.2.0-win-x64.zip`：免安装，全部解压后双击目录里的 `Start Your DSA.exe`。
+- `Start-Your-DSA-0.2.2-win-x64.zip`：免安装，全部解压后双击目录里的 `Start Your DSA.exe`。
 - `win-unpacked/`：解压版目录，里面也能直接双击 `Start Your DSA.exe`。
 
 默认发布 ZIP，不再生成每次启动都自解压的单文件 EXE。

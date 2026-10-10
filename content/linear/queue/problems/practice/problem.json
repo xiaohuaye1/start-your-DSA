@@ -1,24 +1,25 @@
 {
-  "id": "linear.queue.practice",
-  "title": "实现队列的三个操作",
+  "id": "linear.queue.practice.workshop_v2",
+  "title": "顺序队列实战：假满、挪表与接口",
   "time_limit_ms": 2000,
   "cases": [
     {
-      "name": "样例：基础用例",
-      "input": "7\n1 3\n1 5\n3\n2\n1 7\n2\n3\n",
-      "expected": "3\n3\n5\n7\n",
+      "name": "挪表避免假满",
+      "input": "3 13\n1 10\n1 20\n1 30\n2\n7\n1 40\n7\n1 50\n5\n3\n2\n2\n2\n",
+      "expected": "OK\nOK\nOK\n10\n1 3\nOK\n0 3\nFULL\n20 30 40\n20\n20\n30\n40\n",
       "sample": true
     },
     {
-      "name": "普通用例 2",
-      "input": "8\n1 2\n1 4\n1 6\n2\n3\n2\n1 8\n3\n",
-      "expected": "2\n4\n4\n6\n"
+      "name": "空队列和重复查看",
+      "input": "2 9\n2\n3\n1 0\n3\n3\n7\n4\n2\n5\n",
+      "expected": "EMPTY\nEMPTY\nOK\n0\n0\n0 1\n1\n0\nEMPTY\n",
+      "sample": false
     },
     {
-      "name": "普通用例 3",
-      "input": "6\n1 7\n1 3\n2\n1 5\n3\n2\n",
-      "expected": "7\n3\n3\n"
+      "name": "清空与再次入队",
+      "input": "2 10\n1 7\n1 8\n1 9\n6\n7\n1 5\n1 6\n2\n1 0\n5\n",
+      "expected": "OK\nOK\nFULL\nOK\n0 0\nOK\nOK\n5\nOK\n6 0\n",
+      "sample": false
     }
   ]
 }
-
